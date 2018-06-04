@@ -15,7 +15,7 @@ $(document).ready(function() {
 		}
 	});
 
-	$("#duepublico-generated-url").each(function() {
+	$("#mir-generated-url").each(function() {
 		$(this).attr("disabled", "true");
 
 		if (!isEmpty(currentid)) {
@@ -25,9 +25,9 @@ $(document).ready(function() {
 
 	});
 
-	$("#duepublico-aliaspart").on("change paste keyup", function() {
+	$("#mir-aliaspart").on("change paste keyup", function() {
 
-		$("#duepublico-generated-url").attr("value", generatedurl + $("#duepublico-aliaspart").val());
+		$("#mir-generated-url").attr("value", generatedurl + $("#mir-aliaspart").val());
 	});
 
 	function loadAlias(mycoreid, isinitial, initialAlias) {
@@ -67,16 +67,16 @@ $(document).ready(function() {
 							
 							generatedurl = webApplicationBaseURL + 'go/' + alias;
 
-							$("#duepublico-aliaspart").attr("value", aliaspart);
+							$("#mir-aliaspart").attr("value", aliaspart);
 						}
 					}
 
-					if (isEmpty($("#duepublico-aliaspart").val())) {
+					if (isEmpty($("#mir-aliaspart").val())) {
 
-						$("#duepublico-generated-url").attr("value", generatedurl);
+						$("#mir-generated-url").attr("value", generatedurl);
 					} else {
 
-						$("#duepublico-generated-url").attr("value", generatedurl + $("#duepublico-aliaspart").val());
+						$("#mir-generated-url").attr("value", generatedurl + $("#mir-aliaspart").val());
 
 					}
 
