@@ -23,7 +23,7 @@ With a given alias mechanismus http://www.mycore.de/mir/receive/mir_mods_0000000
 
 Add the following lines to schema.xml 
 
-	`<!-- Alias (/go/* URLs) -->
-	 <field name="alias" type="string" indexed="true" stored="true" multiValued="false"/>`
+		<!-- Alias (/go/* URLs) -->
+		<field name="alias" type="string" indexed="true" stored="true" multiValued="false"/>
 
 
