@@ -11,7 +11,6 @@
   <xsl:template match="mycoreobject">
     <xsl:apply-imports />
     <xsl:apply-templates select="service/servflags/servflag[@type='alias']" mode="alias" />
-    <xsl:apply-templates select="metadata/def.modsContainer/modsContainer/mods:mods/mods:relatedItem[@type='host'][@xlink:href]" mode="rootID" />
   </xsl:template>
   
   <xsl:template match="service/servflags/servflag[@type='alias']" mode="alias">
