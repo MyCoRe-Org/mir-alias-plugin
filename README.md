@@ -16,5 +16,5 @@ With a given alias mechanismus http://www.mycore.de/mir/receive/mir_mods_0000000
 
 5. Copy the created jar file from target (/mir-alias-plugin/target) to mycore home lib 
 
-(Windows Systems C:\Users\User\AppData\Local\MyCoRe\mirapplication\lib)
+(Windows Systems C:\Users\User\AppData\Local\MyCoRe\mirapplication\lib) <br />
 (Linux Systems /home/user/.mycore/mirapplication/lib)
