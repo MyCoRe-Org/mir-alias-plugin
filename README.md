@@ -10,7 +10,7 @@ With a given alias mechanismus http://www.mycore.de/mir/receive/mir_mods_0000000
 
 2. Unzip the downloaded file to create a development project folder location 
 
-3. customize generel mycore.properties(http://www.mycore.de/documentation/getting_started/mcr_properties.html) for this plugin (/mir-alias-plugin/src/main/resources/config/mir-alias-plugin/mycore.properties)
+3. Customize generel mycore.properties(http://www.mycore.de/documentation/getting_started/mcr_properties.html) for this plugin (/mir-alias-plugin/src/main/resources/config/mir-alias-plugin/mycore.properties)
 
 4. Create jar file with maven => mvn clean && mvn install
 
@@ -19,7 +19,7 @@ With a given alias mechanismus http://www.mycore.de/mir/receive/mir_mods_0000000
 (Windows Systems C:\Users\User\AppData\Local\MyCoRe\mirapplication\lib) <br />
 (Linux Systems /home/user/.mycore/mirapplication/lib)
 
-6. readjust solr schema with new alias parameter (http://www.mycore.de/documentation/getting_started/solr_7.html)
+6. Readjust solr schema with new alias parameter (http://www.mycore.de/documentation/getting_started/solr_7.html)
 
 Add the following lines to schema.xml 
 
