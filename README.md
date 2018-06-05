@@ -18,3 +18,12 @@ With a given alias mechanismus http://www.mycore.de/mir/receive/mir_mods_0000000
 
 (Windows Systems C:\Users\User\AppData\Local\MyCoRe\mirapplication\lib) <br />
 (Linux Systems /home/user/.mycore/mirapplication/lib)
+
+6. readjust solr schema with new alias parameter (http://www.mycore.de/documentation/getting_started/solr_7.html)
+
+Add the following lines to schema.xml 
+
+	`<!-- Alias (/go/* URLs) -->
+	 <field name="alias" type="string" indexed="true" stored="true" multiValued="false"/>`
+
+
