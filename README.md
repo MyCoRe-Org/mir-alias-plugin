@@ -2,7 +2,7 @@
 Every MIR document is addressed to a mods identifier, e.g. http://www.mycore.de/mir/receive/mir_mods_00000003.
 This plugin extends this url with an alias mechanismus. The mir-admin document form is expanded with alias fields.
 
-With a given alias mechanismus the previous URL is also reachable via created alias-URL, for example "http://localhost:8291/mir/go/oa/publicationsfonds"
+With a given alias mechanismus the previous URL is also reachable via created alias-URL, for example "http://.../mir/go/oa/publicationsfonds"
 
 ## Installation instructions (As mir-enduser)
 
