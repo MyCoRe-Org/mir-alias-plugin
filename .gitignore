@@ -1,0 +1,20 @@
+## Eclipse https://github.com/github/gitignore/blob/master/Global/Eclipse.gitignore
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+local.properties
+.settings/
+.loadpath
+.recommenders
+
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
+
+# Eclipse Core
+.project
+
+
