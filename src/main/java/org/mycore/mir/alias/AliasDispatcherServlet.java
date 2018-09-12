@@ -21,13 +21,12 @@ import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrClient.Builder;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
-import org.mycore.common.config.MCRConfiguration;
 import org.mycore.datamodel.metadata.MCRMetadataManager;
 import org.mycore.datamodel.metadata.MCRObjectID;
 import org.mycore.datamodel.niofs.MCRPath;
+import org.mycore.solr.MCRSolrClientFactory;
 import org.mycore.solr.MCRSolrUtils;
 
 /**
@@ -43,7 +42,6 @@ public class AliasDispatcherServlet extends HttpServlet {
 	private static final long serialVersionUID = -4222669908309310140L;
 	private static Logger LOGGER = LogManager.getLogger();
 
-	private static final String SERVER_URL = "MCR.Module-solr.ServerURL";
 
 	// Solr Fieldnames
 	private static final String OBJECT_ID = "id";
@@ -53,8 +51,8 @@ public class AliasDispatcherServlet extends HttpServlet {
 	 * 
 	 * Client which communicates with MyCoRe Solr Server
 	 */
-	private SolrClient client = new Builder(MCRConfiguration.instance().getString(SERVER_URL)).build();
-
+	SolrClient solrClient = MCRSolrClientFactory.getMainSolrClient();
+	
 	@Override
 	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
@@ -242,7 +240,7 @@ public class AliasDispatcherServlet extends HttpServlet {
 		query.setStart(0);
 
 		QueryResponse response;
-		response = client.query(query);
+		response = solrClient.query(query);
 
 		return response.getResults();
 	}
