@@ -1,12 +1,12 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
 
   <parent>
     <groupId>org.mycore.mir</groupId>
     <artifactId>mir-parent</artifactId>
-    <version>2017.07-SNAPSHOT</version>
+    <version>2018.06.0.1-SNAPSHOT</version>
   </parent>
   <artifactId>mir-alias-plugin</artifactId>
   <packaging>jar</packaging>
@@ -28,7 +28,6 @@
     <powermock.version>1.6.2</powermock.version>
     <mockito.version>1.10.19</mockito.version>
   </properties>
-
 
   <repositories>
     <repository>
@@ -54,6 +53,13 @@
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </pluginRepository>
   </pluginRepositories>
+  <distributionManagement>
+    <site>
+      <id>MyCoRe HQ</id>
+      <name>MyCoRe HQ-sites</name>
+      <url>scp://server.mycore.de/mcr/mycore.de/generated/mir${site.suffix}</url>
+    </site>
+  </distributionManagement>
 
   <build>
     <plugins>
@@ -75,6 +81,17 @@
   </build>
 
   <dependencies>
+
+    <!-- mycore dependencies -->
+    <dependency>
+      <groupId>org.mycore</groupId>
+      <artifactId>mycore-solr</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.mycore</groupId>
+      <artifactId>mycore-mets</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
@@ -96,15 +113,8 @@
       <artifactId>jdom2</artifactId>
     </dependency>
 
-    <dependency>
-      <groupId>org.mycore</groupId>
-      <artifactId>mycore-base</artifactId>
-      <type>jar</type>
-    </dependency>
-    <dependency>
-      <groupId>org.mycore</groupId>
-      <artifactId>mycore-solr</artifactId>
-    </dependency>
+
+
   </dependencies>
 
 </project>
