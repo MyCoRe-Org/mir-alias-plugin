@@ -1,0 +1,9 @@
+  {
+	"add-field": {
+		"name": "alias",
+		"type": "string",
+		"indexed": true,
+		"stored": true,
+		"multiValued": false
+	}
+}
