@@ -44,263 +44,264 @@ import org.xml.sax.SAXException;
  */
 public class AliasDispatcherServlet extends MCRContentServlet {
 
-	/**
-	 * 
-	 * default generated serial id
-	 */
-	private static final long serialVersionUID = 1L;
+    /**
+     * 
+     * default generated serial id
+     */
+    private static final long serialVersionUID = 1L;
 
-	private static final Logger LOGGER = LogManager.getLogger(AliasDispatcherServlet.class);
+    private static final Logger LOGGER = LogManager.getLogger(AliasDispatcherServlet.class);
 
-	// Solr Fieldnames
-	private static final String OBJECT_ID = "id";
-	private static final String ALIAS = "alias";
+    // Solr Fieldnames
+    private static final String OBJECT_ID = "id";
+    private static final String ALIAS = "alias";
 
-	public static final String FILE_PATTERN_LAYOUTSERVICE = "MCR.Alias.Filepattern";
+    public static final String FILE_PATTERN_LAYOUTSERVICE = "MCR.Alias.Filepattern";
 
-	/**
-	 * 
-	 * Client which communicates with MyCoRe Solr Server
-	 */
-	SolrClient solrClient = MCRSolrClientFactory.getMainSolrClient();
+    /**
+     * 
+     * Client which communicates with MyCoRe Solr Server
+     */
+    SolrClient solrClient = MCRSolrClientFactory.getMainSolrClient();
 
-	MCRConfiguration configuration = MCRConfiguration.instance();
+    MCRConfiguration configuration = MCRConfiguration.instance();
 
-	@Override
-	public MCRContent getContent(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    @Override
+    public MCRContent getContent(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
-		SolrDocumentList results = new SolrDocumentList();
-		String path = request.getPathInfo();
+        SolrDocumentList results = new SolrDocumentList();
+        String path = request.getPathInfo();
 
-		boolean isforwarded = false;
+        boolean isforwarded = false;
 
-		if (path != null) {
+        if (path != null) {
 
-			List<String> pathParts = new ArrayList<String>(Arrays.asList(path.split("/")));
+            List<String> pathParts = new ArrayList<String>(Arrays.asList(path.split("/")));
 
-			pathParts.removeIf(pathPart -> pathPart.isEmpty());
+            pathParts.removeIf(pathPart -> pathPart.isEmpty());
 
-			if (!pathParts.isEmpty()) {
+            if (!pathParts.isEmpty()) {
 
-				LOGGER.debug("Try to resolve Alias with path: " + path);
+                LOGGER.debug("Try to resolve Alias with path: " + path);
 
-				path = parsePath(path);
-				/*
-				 * Try to resolve path as an alias
-				 */
-				results = getMCRObjectsFromSolr(path);
+                path = parsePath(path);
+                /*
+                 * Try to resolve path as an alias
+                 */
+                results = getMCRObjectsFromSolr(path);
 
-				/*
-				 * Use request dispatcher to forward alias URL to equal MyCoRe Object URL
-				 */
-				if (!results.isEmpty() && results.get(0) != null) {
+                /*
+                 * Use request dispatcher to forward alias URL to equal MyCoRe Object URL
+                 */
+                if (!results.isEmpty() && results.get(0) != null) {
 
-					RequestDispatcher dispatcher = request.getServletContext()
-							.getRequestDispatcher("/receive/" + results.get(0).getFieldValue(OBJECT_ID));
+                    RequestDispatcher dispatcher = request.getServletContext()
+                            .getRequestDispatcher("/receive/" + results.get(0).getFieldValue(OBJECT_ID));
 
-					try {
-						dispatcher.forward(request, response);
-						isforwarded = true;
+                    try {
+                        dispatcher.forward(request, response);
+                        isforwarded = true;
 
-						LOGGER.info("Alias was found with Object id: " + results.get(0).getFieldValue(OBJECT_ID));
-						LOGGER.info("Alias will be dispatched to to path /reveive/"
-								+ results.get(0).getFieldValue(OBJECT_ID));
-					} catch (ServletException e) {
+                        LOGGER.info("Alias was found with Object id: " + results.get(0).getFieldValue(OBJECT_ID));
+                        LOGGER.info("Alias will be dispatched to to path /reveive/"
+                                + results.get(0).getFieldValue(OBJECT_ID));
+                    } catch (ServletException e) {
 
-						LOGGER.error("Error on dispatching object with id: " + results.get(0).getFieldValue(OBJECT_ID));
-					}
-				}
+                        LOGGER.error("Error on dispatching object with id: " + results.get(0).getFieldValue(OBJECT_ID));
+                    }
+                }
 
-				/*
-				 * If MyCoRe Object wasn't found, check higher path
-				 */
-				if (pathParts.size() > 1 && !isforwarded) {
+                /*
+                 * If MyCoRe Object wasn't found, check higher path
+                 */
+                if (pathParts.size() > 1 && !isforwarded) {
 
-					String aliasPart = "/";
+                    String aliasPart = "/";
 
-					for (int i = 0; i < pathParts.size() - 1; i++) {
+                    for (int i = 0; i < pathParts.size() - 1; i++) {
 
-						aliasPart = aliasPart + pathParts.get(i) + "/";
-					}
+                        aliasPart = aliasPart + pathParts.get(i) + "/";
+                    }
 
-					String possibleFilename = pathParts.get(pathParts.size() - 1);
+                    String possibleFilename = pathParts.get(pathParts.size() - 1);
 
-					LOGGER.debug("Try to resolve file with filename: " + possibleFilename);
-					LOGGER.debug("Looking for derivates in alias: " + aliasPart);
+                    LOGGER.debug("Try to resolve file with filename: " + possibleFilename);
+                    LOGGER.debug("Looking for derivates in alias: " + aliasPart);
 
-					/*
-					 * try to resolve mycore object belongs to filename
-					 */
-					results = getMCRObjectsFromSolr(parsePath(aliasPart));
+                    /*
+                     * try to resolve mycore object belongs to filename
+                     */
+                    results = getMCRObjectsFromSolr(parsePath(aliasPart));
 
-					if (!results.isEmpty()) {
+                    if (!results.isEmpty()) {
 
-						Object documentId = results.get(0).getFieldValue(OBJECT_ID);
+                        Object documentId = results.get(0).getFieldValue(OBJECT_ID);
 
-						if (documentId != null && documentId instanceof String) {
+                        if (documentId != null && documentId instanceof String) {
 
-							/*
-							 * Get doument Id as MCRObjectID
-							 */
-							MCRObjectID mcrObjectId = MCRObjectID.getInstance((String) documentId);
+                            /*
+                             * Get doument Id as MCRObjectID
+                             */
+                            MCRObjectID mcrObjectId = MCRObjectID.getInstance((String) documentId);
 
-							/*
-							 * get derivatives
-							 */
-							List<MCRObjectID> derivatesForDocument = MCRMetadataManager.getDerivateIds(mcrObjectId, 0,
-									TimeUnit.MILLISECONDS);
+                            /*
+                             * get derivatives
+                             */
+                            List<MCRObjectID> derivatesForDocument = MCRMetadataManager.getDerivateIds(mcrObjectId, 0,
+                                    TimeUnit.MILLISECONDS);
 
-							if (derivatesForDocument != null) {
+                            if (derivatesForDocument != null) {
 
-								for (MCRObjectID mcrDerivateID : derivatesForDocument) {
+                                for (MCRObjectID mcrDerivateID : derivatesForDocument) {
 
-									if (!isforwarded) {
+                                    if (!isforwarded) {
 
-										LOGGER.debug("Looking in derivate " + mcrDerivateID.toString()
-												+ " for filename: " + possibleFilename);
+                                        LOGGER.debug("Looking in derivate " + mcrDerivateID.toString()
+                                                + " for filename: " + possibleFilename);
 
-										MCRPath mcrPath = MCRPath.getPath(mcrDerivateID.toString(), possibleFilename);
+                                        MCRPath mcrPath = MCRPath.getPath(mcrDerivateID.toString(), possibleFilename);
 
-										Files.readAttributes(mcrPath, BasicFileAttributes.class);
+                                        Files.readAttributes(mcrPath, BasicFileAttributes.class);
 
-										LOGGER.info(possibleFilename + " was found in derivate "
-												+ mcrDerivateID.toString());
+                                        LOGGER.info(possibleFilename + " was found in derivate "
+                                                + mcrDerivateID.toString());
 
-										/*
-										 * Should the file be transformed via getLayoutService() ?
-										 */
-										final String aliasFilePattern = configuration
-												.getString(FILE_PATTERN_LAYOUTSERVICE, "");
+                                        /*
+                                         * Should the file be transformed via getLayoutService() ?
+                                         */
+                                        final String aliasFilePattern = configuration
+                                                .getString(FILE_PATTERN_LAYOUTSERVICE, "");
 
-										if (!aliasFilePattern.isEmpty() && possibleFilename.matches(aliasFilePattern)) {
+                                        if (!aliasFilePattern.isEmpty() && possibleFilename.matches(aliasFilePattern)) {
 
-											MCRContent mcrContent = new MCRPathContent(mcrPath);
+                                            MCRContent mcrContent = new MCRPathContent(mcrPath);
 
-											try {
+                                            try {
 
-												LOGGER.info("Alias was requested on MCR Session: " + MCRSessionMgr.getCurrentSessionID());
-												
-												LOGGER.info("Alias won't be dispatched!");
-												LOGGER.info("File will be transformed via MCRLayoutService: "
-														+ mcrDerivateID.toString() + "/" + possibleFilename);
-												return getLayoutService().getTransformedContent(request, response,
-														mcrContent);
+                                                LOGGER.info("Alias was requested on MCR Session: "
+                                                        + MCRSessionMgr.getCurrentSessionID());
 
-											} catch (TransformerException | SAXException e) {
-												throw new IOException("could not transform content", e);
-											}
-
-										} else {
-
-											RequestDispatcher dispatcher = request.getServletContext()
-													.getRequestDispatcher("/servlets/MCRFileNodeServlet/"
-															+ mcrDerivateID.toString() + "/" + possibleFilename);
+                                                LOGGER.info("Alias won't be dispatched!");
+                                                LOGGER.info("File will be transformed via MCRLayoutService: "
+                                                        + mcrDerivateID.toString() + "/" + possibleFilename);
+                                                return getLayoutService().getTransformedContent(request, response,
+                                                        mcrContent);
 
-											try {
-												dispatcher.forward(request, response);
-												isforwarded = true;
+                                            } catch (TransformerException | SAXException e) {
+                                                throw new IOException("could not transform content", e);
+                                            }
 
-												LOGGER.info(
-														"Alias will be dispatched to to path /servlets/MCRFileNodeServlet/"
-																+ mcrDerivateID.toString() + "/" + possibleFilename);
+                                        } else {
 
-											} catch (ServletException e) {
+                                            RequestDispatcher dispatcher = request.getServletContext()
+                                                    .getRequestDispatcher("/servlets/MCRFileNodeServlet/"
+                                                            + mcrDerivateID.toString() + "/" + possibleFilename);
 
-												LOGGER.error("Error on dispatching file to MCRFileNodeServlet: "
-														+ mcrDerivateID.toString() + "/" + possibleFilename);
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-				
-				LOGGER.info("Alias was requested on MCR Session: " + MCRSessionMgr.getCurrentSessionID());
-			}
-		}
+                                            try {
+                                                dispatcher.forward(request, response);
+                                                isforwarded = true;
 
-		// Error redirect
-		if (!isforwarded) {
+                                                LOGGER.info(
+                                                        "Alias will be dispatched to to path /servlets/MCRFileNodeServlet/"
+                                                                + mcrDerivateID.toString() + "/" + possibleFilename);
 
-			response.sendError(HttpServletResponse.SC_NOT_FOUND, "Requested Alias was not found: " + path);
-		}
-		
-		return null;
-	}
+                                            } catch (ServletException e) {
 
-	/**
-	 * 
-	 * Helper method for resolve an alias in solr
-	 * 
-	 * @param aliasPart alias part
-	 * @return Documentlist associated with given alias from solr
-	 */
-	protected SolrDocumentList getMCRObjectsFromSolr(String aliasPart) {
+                                                LOGGER.error("Error on dispatching file to MCRFileNodeServlet: "
+                                                        + mcrDerivateID.toString() + "/" + possibleFilename);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
 
-		SolrDocumentList results = new SolrDocumentList();
+                LOGGER.info("Alias was requested on MCR Session: " + MCRSessionMgr.getCurrentSessionID());
+            }
+        }
 
-		try {
+        // Error redirect
+        if (!isforwarded) {
 
-			String searchStr = ALIAS + ":%filter%".replace("%filter%",
-					aliasPart != null && !aliasPart.isEmpty() ? MCRSolrUtils.escapeSearchValue(aliasPart) : "*");
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Requested Alias was not found: " + path);
+        }
 
-			results = resolveSolrDocuments(searchStr);
+        return null;
+    }
 
-			if (results.size() > 1) {
+    /**
+     * 
+     * Helper method for resolve an alias in solr
+     * 
+     * @param aliasPart alias part
+     * @return Documentlist associated with given alias from solr
+     */
+    protected SolrDocumentList getMCRObjectsFromSolr(String aliasPart) {
 
-				LOGGER.info("Multiple MCR Objects found for Alias " + aliasPart);
-			}
+        SolrDocumentList results = new SolrDocumentList();
 
-		} catch (SolrServerException | IOException e) {
+        try {
 
-			LOGGER.error(e.getMessage());
-			LOGGER.error("Error in communication with solr server: " + e.getMessage());
-		}
+            String searchStr = ALIAS + ":%filter%".replace("%filter%",
+                    aliasPart != null && !aliasPart.isEmpty() ? MCRSolrUtils.escapeSearchValue(aliasPart) : "*");
 
-		return results;
-	}
+            results = resolveSolrDocuments(searchStr);
 
-	/**
-	 * Parses additional chars to given path
-	 * 
-	 * @param path searchpath
-	 * @return path without additional chars
-	 */
-	private String parsePath(String path) {
+            if (results.size() > 1) {
 
-		/*
-		 * remove "/" character at beginning and end
-		 */
-		if (path.charAt(path.length() - 1) == '/') {
+                LOGGER.info("Multiple MCR Objects found for Alias " + aliasPart);
+            }
 
-			path = StringUtils.chop(path);
-		}
+        } catch (SolrServerException | IOException e) {
 
-		return path.substring(1);
-	}
+            LOGGER.error(e.getMessage());
+            LOGGER.error("Error in communication with solr server: " + e.getMessage());
+        }
 
-	/**
-	 * 
-	 * Resolving Solr Documents with given searchStr
-	 * 
-	 *
-	 * @param searchStr search String for solr query
-	 * @return if there is an indexing in solr, then get the resolved document
-	 * @throws SolrServerException
-	 * @throws IOException
-	 */
-	public SolrDocumentList resolveSolrDocuments(String searchStr) throws SolrServerException, IOException {
+        return results;
+    }
 
-		SolrQuery query = new SolrQuery();
+    /**
+     * Parses additional chars to given path
+     * 
+     * @param path searchpath
+     * @return path without additional chars
+     */
+    private String parsePath(String path) {
 
-		query.setQuery(searchStr);
-		query.setStart(0);
+        /*
+         * remove "/" character at beginning and end
+         */
+        if (path.charAt(path.length() - 1) == '/') {
 
-		QueryResponse response;
-		response = solrClient.query(query);
+            path = StringUtils.chop(path);
+        }
 
-		return response.getResults();
-	}
+        return path.substring(1);
+    }
+
+    /**
+     * 
+     * Resolving Solr Documents with given searchStr
+     * 
+     *
+     * @param searchStr search String for solr query
+     * @return if there is an indexing in solr, then get the resolved document
+     * @throws SolrServerException
+     * @throws IOException
+     */
+    public SolrDocumentList resolveSolrDocuments(String searchStr) throws SolrServerException, IOException {
+
+        SolrQuery query = new SolrQuery();
+
+        query.setQuery(searchStr);
+        query.setStart(0);
+
+        QueryResponse response;
+        response = solrClient.query(query);
+
+        return response.getResults();
+    }
 }
