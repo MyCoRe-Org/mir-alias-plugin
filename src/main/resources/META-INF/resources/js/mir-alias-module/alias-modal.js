@@ -1,13 +1,16 @@
 $(document).ready(function() {
 
-	var generatedurl = webApplicationBaseURL + 'go/';
+	
+	var aliasPath = 'go';
+	
+	var generatedurl = webApplicationBaseURL + aliasPath + '/';
 	var alias = '';
 	var currentid = getUrlParameter('id');
 
 	// observe related item
-	$('.form-inline').observe('added', 'span:first', function(record) {
+	$('.mir-related-item-search .form-inline').observe('added', 'span:first', function(record) {
 
-		var idparent = $(".form-inline span:first").text();
+		var idparent = $(".mir-related-item-search .form-inline span:first").text();
 
 		if (!isEmpty(idparent)) {
 
@@ -41,7 +44,7 @@ $(document).ready(function() {
 				if (!isEmpty(alias)) {
 
 					if (!isinitial) {
-						generatedurl = webApplicationBaseURL + 'go/' + alias
+						generatedurl = webApplicationBaseURL + aliasPath + '/' + alias
 					} else {
 
 						if (initialAlias == null) {
@@ -65,7 +68,7 @@ $(document).ready(function() {
 								aliaspart = aliaspart.substr(0, aliaspart.length - 1);
 							}
 							
-							generatedurl = webApplicationBaseURL + 'go/' + alias;
+							generatedurl = webApplicationBaseURL + aliasPath + '/' + alias;
 
 							$("#mir-aliaspart").attr("value", aliaspart);
 						}
