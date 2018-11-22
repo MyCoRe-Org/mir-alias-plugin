@@ -21,6 +21,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.mycore.access.MCRAccessManager;
+import org.mycore.common.MCRSessionMgr;
 import org.mycore.common.config.MCRConfiguration;
 import org.mycore.common.content.MCRContent;
 import org.mycore.common.content.MCRPathContent;
@@ -79,6 +80,9 @@ public class MCRAliasContentServlet extends MCRContentServlet {
             return null;
         }
 
+        LOGGER.info("Start try to get MCRContent via MCRAliasContentServlet on path: " + path);
+        LOGGER.info("Use MCRSession: " + MCRSessionMgr.getCurrentSessionID());
+        
         List<String> pathParts = new ArrayList<String>(Arrays.asList(path.split("/")));
 
         pathParts.removeIf(pathPart -> pathPart.isEmpty());
