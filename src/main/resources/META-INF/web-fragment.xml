@@ -5,11 +5,11 @@
 	id="WebFragment_ID" version="3.0">
 
 	<servlet>
-		<servlet-name>AliasDispatcherServlet</servlet-name>
-		<servlet-class>org.mycore.mir.alias.AliasDispatcherServlet</servlet-class>
+		<servlet-name>MCRAliasContentServlet</servlet-name>
+		<servlet-class>org.mycore.alias.servlets.MCRAliasContentServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
-		<servlet-name>AliasDispatcherServlet</servlet-name>
+		<servlet-name>MCRAliasContentServlet</servlet-name>
 		<url-pattern>/go/*</url-pattern>
 	</servlet-mapping>
 </web-fragment>

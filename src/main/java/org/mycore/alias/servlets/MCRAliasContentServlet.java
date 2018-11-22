@@ -1,4 +1,4 @@
-package org.mycore.mir.alias;
+package org.mycore.alias.servlets;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -34,14 +34,14 @@ import org.mycore.solr.MCRSolrUtils;
 import org.xml.sax.SAXException;
 
 /**
- *
- *
- * The {@code AliasDispatcherServlet} is a resolving mechanism to use meaningful
- * names for IDs in mycore.
- *
- * @author Paul Rochowski
- */
-public class AliasDispatcherServlet extends MCRContentServlet {
+*
+*
+* The {@code MCRAliasContentServlet} is a resolving mechanism to use meaningful
+* names for IDs in mycore.
+*
+* @author Paul Rochowski
+*/
+public class MCRAliasContentServlet extends MCRContentServlet {
 
     /**
      * 
@@ -49,7 +49,7 @@ public class AliasDispatcherServlet extends MCRContentServlet {
      */
     private static final long serialVersionUID = 1L;
 
-    private static final Logger LOGGER = LogManager.getLogger(AliasDispatcherServlet.class);
+    private static final Logger LOGGER = LogManager.getLogger(MCRAliasContentServlet.class);
 
     // Solr Fieldnames
     private static final String OBJECT_ID = "id";
@@ -76,6 +76,7 @@ public class AliasDispatcherServlet extends MCRContentServlet {
         if (path == null || path.equals("/")) {
 
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "No Alias path was set!");
+            return null;
         }
 
         List<String> pathParts = new ArrayList<String>(Arrays.asList(path.split("/")));
