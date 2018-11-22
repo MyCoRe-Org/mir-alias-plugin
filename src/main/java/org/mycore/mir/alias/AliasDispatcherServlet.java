@@ -8,8 +8,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import javax.servlet.RequestDispatcher;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
@@ -23,7 +21,6 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.mycore.access.MCRAccessManager;
-import org.mycore.common.MCRSessionMgr;
 import org.mycore.common.config.MCRConfiguration;
 import org.mycore.common.content.MCRContent;
 import org.mycore.common.content.MCRPathContent;
@@ -81,8 +78,6 @@ public class AliasDispatcherServlet extends MCRContentServlet {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "No Alias path was set!");
         }
 
-        boolean isforwarded = false;
-
         List<String> pathParts = new ArrayList<String>(Arrays.asList(path.split("/")));
 
         pathParts.removeIf(pathPart -> pathPart.isEmpty());
@@ -121,7 +116,7 @@ public class AliasDispatcherServlet extends MCRContentServlet {
         /*
          * If MyCoRe Object wasn't found, check higher path
          */
-        if (pathParts.size() > 1 && !isforwarded) {
+        if (pathParts.size() > 1) {
 
             String aliasPart = "/";
 
@@ -161,74 +156,69 @@ public class AliasDispatcherServlet extends MCRContentServlet {
 
                         for (MCRObjectID mcrDerivateID : derivatesForDocument) {
 
-                            if (!isforwarded) {
+                            LOGGER.debug("Looking in derivate " + mcrDerivateID.toString() + " for filename: "
+                                    + possibleFilename);
 
-                                LOGGER.debug("Looking in derivate " + mcrDerivateID.toString() + " for filename: "
+                            MCRPath mcrPath = MCRPath.getPath(mcrDerivateID.toString(), possibleFilename);
+
+                            /*
+                             * Is the specified filename existing in the derivate?
+                             *  -> If no, continue iteration through derivate list
+                             */
+                            try {
+                                Files.readAttributes(mcrPath, BasicFileAttributes.class);
+                            } catch (Exception exc) {
+
+                                LOGGER.info(mcrDerivateID.toString() + ":/ -> " + possibleFilename
+                                        + " : file does not exist");
+                                continue;
+                            }
+                            LOGGER.info(possibleFilename + " was found in derivate " + mcrDerivateID.toString());
+
+                            /*
+                             * permission check on derivate
+                             */
+                            if (!MCRAccessManager.checkPermissionForReadingDerivate(mcrDerivateID.toString())) {
+                                LOGGER.info("AccessForbidden to {}", request.getPathInfo());
+                                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                                return null;
+                            }
+
+                            MCRContent mcrContent = new MCRPathContent(mcrPath);
+
+                            final String aliasFilePattern = configuration.getString(FILE_PATTERN_LAYOUTSERVICE, "");
+
+                            /*
+                             * Should the file be transformed via getLayoutService() ?
+                             */
+                            if (!aliasFilePattern.isEmpty() && possibleFilename.matches(aliasFilePattern)) {
+
+                                try {
+
+                                    LOGGER.info("File will be transformed via MCRLayoutService: "
+                                            + mcrDerivateID.toString() + "/" + possibleFilename);
+                                    return getLayoutService().getTransformedContent(request, response, mcrContent);
+
+                                } catch (TransformerException | SAXException e) {
+                                    throw new IOException("could not transform content", e);
+                                }
+
+                            } else {
+
+                                LOGGER.info("File will be return as MCRPathContent: " + mcrDerivateID.toString() + "/"
                                         + possibleFilename);
 
-                                MCRPath mcrPath = MCRPath.getPath(mcrDerivateID.toString(), possibleFilename);
-
-                                Files.readAttributes(mcrPath, BasicFileAttributes.class);
-
-                                LOGGER.info(possibleFilename + " was found in derivate " + mcrDerivateID.toString());
-
-                                /*
-                                 * Should the file be transformed via getLayoutService() ?
-                                 */
-                                final String aliasFilePattern = configuration.getString(FILE_PATTERN_LAYOUTSERVICE, "");
-
-                                if (!aliasFilePattern.isEmpty() && possibleFilename.matches(aliasFilePattern)) {
-
-                                    MCRContent mcrContent = new MCRPathContent(mcrPath);
-
-                                    try {
-
-                                        LOGGER.info("Alias was requested on MCR Session: "
-                                                + MCRSessionMgr.getCurrentSessionID());
-
-                                        LOGGER.info("Alias won't be dispatched!");
-                                        LOGGER.info("File will be transformed via MCRLayoutService: "
-                                                + mcrDerivateID.toString() + "/" + possibleFilename);
-                                        return getLayoutService().getTransformedContent(request, response, mcrContent);
-
-                                    } catch (TransformerException | SAXException e) {
-                                        throw new IOException("could not transform content", e);
-                                    }
-
-                                } else {
-
-                                    RequestDispatcher dispatcher = request.getServletContext()
-                                            .getRequestDispatcher("/servlets/MCRFileNodeServlet/"
-                                                    + mcrDerivateID.toString() + "/" + possibleFilename);
-
-                                    try {
-                                        dispatcher.forward(request, response);
-                                        isforwarded = true;
-
-                                        LOGGER.info("Alias will be dispatched to to path /servlets/MCRFileNodeServlet/"
-                                                + mcrDerivateID.toString() + "/" + possibleFilename);
-
-                                    } catch (ServletException e) {
-
-                                        LOGGER.error("Error on dispatching file to MCRFileNodeServlet: "
-                                                + mcrDerivateID.toString() + "/" + possibleFilename);
-                                    }
-                                }
+                                return mcrContent;
                             }
                         }
                     }
                 }
 
-                LOGGER.info("Alias was requested on MCR Session: " + MCRSessionMgr.getCurrentSessionID());
             }
         }
 
         // Error redirect
-        if (!isforwarded) {
-
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Requested Alias was not found: " + path);
-        }
-
+        response.sendError(HttpServletResponse.SC_NOT_FOUND, "Requested Alias was not found: " + path);
         return null;
     }
 
