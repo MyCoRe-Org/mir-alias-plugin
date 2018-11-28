@@ -1,103 +1,39 @@
 $(document).ready(function() {
 
 	
-	var aliasPath = 'go';
+	console.log('alias-modal.js: look into current mycore object metadata and all parents to get the full url')
 	
-	var generatedurl = webApplicationBaseURL + aliasPath + '/';
-	var alias = '';
-	var currentid = getUrlParameter('id');
-
-	// observe related item
-	$('.mir-related-item-search .form-inline').observe('added', 'span:first', function(record) {
-
-		var idparent = $(".mir-related-item-search .form-inline span:first").text();
-
-		if (!isEmpty(idparent)) {
-
-			loadAlias(idparent, false, null);
-		}
-	});
-
-	$("#mir-generated-url").each(function() {
-		$(this).attr("disabled", "true");
-
-		if (!isEmpty(currentid)) {
-
-			loadAlias(currentid, true, null);
-		}
-
-	});
-
-	$("#mir-aliaspart").on("change paste keyup", function() {
-
-		$("#mir-generated-url").attr("value", generatedurl + $("#mir-aliaspart").val());
-	});
-
-	function loadAlias(mycoreid, isinitial, initialAlias) {
+	var currentMyCoreId = getUrlParameter('id');
+	
+	console.log('alias-modal.js: Current edited mycore object is ' +  currentMyCoreId);
+	getAliasContext(currentMyCoreId);
+	
+	
+	// helper methods
+	function getAliasContext(mycoreid) {
+		
+		var urlMycoreObj = webApplicationBaseURL + "api/v2/objects/" + mycoreid;
+		
 		$.ajax({
-			url : webApplicationBaseURL + "servlets/solr/select?q=id:" + mycoreid + "&XSL.Style=xml",
+			url : urlMycoreObj,
+	        dataType: "xml",
 			type : "GET",
 			success : function(data) {
-
-				alias = $(data).find("str[name='alias']").text() + '/';
-
-				if (!isEmpty(alias)) {
-
-					if (!isinitial) {
-						generatedurl = webApplicationBaseURL + aliasPath + '/' + alias
-					} else {
-
-						if (initialAlias == null) {
-
-							var parentid = $(data).find("str[name='parent']").text();
-
-						    if (parentid && parentid.length > 0) {
-
-						    	loadAlias(parentid, true, alias);
-	                        }
-						    
-						} else {
-
-							// we are in initial state, we have the parent Alias
-							// we can get the part with help of diff
-
-							var aliaspart = initialAlias.replace(alias, '');
-
-							if (aliaspart.charAt(aliaspart.length - 1) == '/') {
-
-								aliaspart = aliaspart.substr(0, aliaspart.length - 1);
-							}
-							
-							generatedurl = webApplicationBaseURL + aliasPath + '/' + alias;
-
-							$("#mir-aliaspart").attr("value", aliaspart);
-						}
-					}
-
-					if (isEmpty($("#mir-aliaspart").val())) {
-
-						$("#mir-generated-url").attr("value", generatedurl);
-					} else {
-
-						$("#mir-generated-url").attr("value", generatedurl + $("#mir-aliaspart").val());
-
-					}
-
-				}
+				
+				var myCoreObjServFlagNodes = $('servflags',data);
+				
+				//console.log(data);
+				
+				return myCoreObjServFlagNodes.find('servflag[type="alias"]').text();
 			},
+			
 			error : function(error) {
-				console.log("Failed to load alias for " + mycoreid);
+				console.log("Failed to get Alias context for " + mycoreid);
 				console.log(error);
 			}
 		});
 	}
-
-	// javascript helper methods
-
-	function isEmpty(value) {
-		return typeof value == 'string' && !value.trim() || typeof value == 'undefined' || value === null;
-	}
-
+	
 	function getUrlParameter(sParam) {
 		var sPageURL = decodeURIComponent(window.location.search.substring(1)), sURLVariables = sPageURL.split('&'), sParameterName, i;
 
