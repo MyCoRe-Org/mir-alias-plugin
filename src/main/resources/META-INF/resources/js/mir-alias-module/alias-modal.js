@@ -2,43 +2,52 @@ $(document).ready(function() {
     console.log('alias-modal.js: look into current mycore object metadata and all parents to get the full url')
 
     var currentMyCoreId = getUrlParameter('id');
-
     console.log('alias-modal.js: Current edited mycore object is ' + currentMyCoreId);
 
     var mycoreIds = []
     mycoreIds.push(currentMyCoreId);
 
-    var aliasContext = getAliasContext(mycoreIds);
+    /*
+     * Use promises for the different alias level requests
+     */
+    var promisesAliasResolve = [];
 
-    // helper methods
-    function getAliasContext(mycoreIds) {
+    var aliasContextTree = new AliasContextTree(currentMyCoreId)
 
-        mycoreIds.forEach(function(mycoreId) {
-            $.ajax({
-                url : webApplicationBaseURL + "api/v2/objects/" + mycoreId,
-                dataType : "xml",
-                type : "GET",
-                success : function(data) {
+    getAliasContext(mycoreIds, 0);
 
-                    var alias = $(data).find('servflag[type="alias"]').text();
-                    var relatedItems = [];
+    function requestMCRObjectMetadata(mycoreId) {
 
-                    $(data).find('mods\\:relatedItem').each(function() {
-                        relatedItems.push($(this).attr('xlink:href'));
-                    });
+        return $.ajax({
+            url : webApplicationBaseURL + "api/v2/objects/" + mycoreId,
+            dataType : "xml",
+            type : "GET"
+        });
+    }
 
-                    return {
-                        mycoreId : mycoreId,
-                        alias : alias,
-                        relatedItems : (relatedItems.length > 0 ? getAliasContext(relatedItems) : undefined)
-                    };
+    function getAliasContext(mycoreIds, parentTreeLevel) {
 
-                },
+        $.each(mycoreIds, function(index, mycoreId) {
 
-                error : function(error) {
-                    console.log("Failed to get Alias context for " + mycoreid);
-                    console.log(error);
+            requestMCRObjectMetadata(mycoreId).then(function(data) {
+
+                var alias = $(data).find('servflag[type="alias"]').text();
+                var relatedItems = [];
+
+                $(data).find('mods\\:relatedItem').each(function() {
+                    relatedItems.push($(this).attr('xlink:href'));
+                });
+
+                console.log('alias-modal.js: Build alias Context for mycore id: ' + mycoreId);
+                console.log('alias-modal.js: {mycoreId : ' + mycoreId + ', alias : ' + alias + ', relatedItems : {' + relatedItems + '}');
+
+                if (parentTreeLevel == 0) {
+                    aliasContextTree.addChild(alias);
+                } else {
+                    aliasContextTree.children[parentTreeLevel - 1].addChild(alias);
                 }
+
+                getAliasContext(relatedItems, parentTreeLevel + 1);
             });
         });
     }
@@ -54,4 +63,31 @@ $(document).ready(function() {
             }
         }
     }
+
+    function simpletest() {
+        console.log(aliasContextTree);
+    }
+    setTimeout(simpletest, 5000);
+
+    function AliasContextTree(value) {
+        this.value = value;
+        this.children = [];
+    }
+
+    AliasContextTree.prototype.addChild = function(value) {
+        var child = new AliasContextTree(value);
+        this.children.push(child);
+        return child;
+    };
+
+    AliasContextTree.prototype.contains = function(value) {
+        if (this.value === value)
+            return true;
+        for (var i = 0; i < this.children.length; i++) {
+            if (this.children[i].contains(value))
+                return true;
+        }
+        return false;
+    };
+
 });
