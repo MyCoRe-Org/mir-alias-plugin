@@ -1,20 +1,49 @@
 $(document).ready(function () {
-    console.log('alias-modal.js: look into current mycore object metadata and all parents to get the full url')
 
-    var currentMyCoreId = getUrlParameter('id');
-    console.log('alias-modal.js: Current edited mycore object is ' + currentMyCoreId);
-
-    var mycoreIds = []
-    mycoreIds.push(currentMyCoreId);
 
     /*
      * Use promises for the different alias level requests
      */
     var promisesAliasResolve = [];
 
-    let aliasTree = new AliasTree();
+    /*
+     * Start to get alias (if exists) from the current document (it will be the
+     * root in alias tree)
+     */
+    let aliasCurrentDocument = '';
+    if (!isEmpty($("#mir-aliaspart").val())) {
+        
+        aliasCurrentDocument = $("#mir-aliaspart").val();
+        let aliasTree = new AliasTree();
+        aliasTree.add(aliasCurrentDocument, 'root');
+        
+        
+        console.log('alias-modal.js: look into related items dependency to get the full url!')
 
-    getAliasContext(mycoreIds, 'root', aliasTree);
+        var relatedItemIds = [];
+
+        $.each($('.mir-related-item-search .form-inline span'), (index, element) => {
+
+            relatedItemIds.push(element.textContent);
+            
+        });
+        
+        console.log('alias-modal.js: related Item mycore Ids are ' + relatedItemIds);
+        getAliasContext(relatedItemIds, aliasCurrentDocument, aliasTree);
+        
+        function simpletest() {
+            console.log(aliasTree);
+        }
+
+        setTimeout(simpletest, 5000); 
+    }
+    
+    // observe related item
+    $('.mir-related-item-search .form-inline').observe('added', 'span', function(change) {
+
+        console.log('alias-modal.js: There was added a new related item. Refresh the alias tree.')
+    });
+
 
     function requestMCRObjectMetadata(mycoreId) {
 
@@ -47,24 +76,6 @@ $(document).ready(function () {
             });
         });
     }
-
-    function getUrlParameter(sParam) {
-        var sPageURL = decodeURIComponent(window.location.search.substring(1)), sURLVariables = sPageURL.split('&'), sParameterName, i;
-
-        for (i = 0; i < sURLVariables.length; i++) {
-            sParameterName = sURLVariables[i].split('=');
-
-            if (sParameterName[0] === sParam) {
-                return sParameterName[1] === undefined ? true : sParameterName[1];
-            }
-        }
-    }
-
-    function simpletest() {
-        console.log(aliasTree);
-    }
-
-    setTimeout(simpletest, 5000);
 });
 
 class AliasTree {
