@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function () {
     console.log('alias-modal.js: look into current mycore object metadata and all parents to get the full url')
 
     var currentMyCoreId = getUrlParameter('id');
@@ -12,42 +12,38 @@ $(document).ready(function() {
      */
     var promisesAliasResolve = [];
 
-    var aliasContextTree = new AliasContextTree(currentMyCoreId)
+    let aliasTree = new AliasTree();
 
-    getAliasContext(mycoreIds, 0);
+    getAliasContext(mycoreIds, 'root', aliasTree);
 
     function requestMCRObjectMetadata(mycoreId) {
 
         return $.ajax({
-            url : webApplicationBaseURL + "api/v2/objects/" + mycoreId,
-            dataType : "xml",
-            type : "GET"
+            url: webApplicationBaseURL + "api/v2/objects/" + mycoreId,
+            dataType: "xml",
+            type: "GET"
         });
     }
 
-    function getAliasContext(mycoreIds, parentTreeLevel) {
+    function getAliasContext(mycoreIds, parent, aliasTree) {
 
-        $.each(mycoreIds, function(index, mycoreId) {
+        $.each(mycoreIds, (index, mycoreId) => {
 
-            requestMCRObjectMetadata(mycoreId).then(function(data) {
+            requestMCRObjectMetadata(mycoreId).then((data) => {
 
                 var alias = $(data).find('servflag[type="alias"]').text();
                 var relatedItems = [];
 
-                $(data).find('mods\\:relatedItem').each(function() {
+                $(data).find('mods\\:relatedItem').each(function () {
                     relatedItems.push($(this).attr('xlink:href'));
                 });
 
                 console.log('alias-modal.js: Build alias Context for mycore id: ' + mycoreId);
                 console.log('alias-modal.js: {mycoreId : ' + mycoreId + ', alias : ' + alias + ', relatedItems : {' + relatedItems + '}');
 
-                if (parentTreeLevel == 0) {
-                    aliasContextTree.addChild(alias);
-                } else {
-                    aliasContextTree.children[parentTreeLevel - 1].addChild(alias);
-                }
+                aliasTree.add(alias, parent);
 
-                getAliasContext(relatedItems, parentTreeLevel + 1);
+                getAliasContext(relatedItems, alias, aliasTree);
             });
         });
     }
@@ -65,29 +61,64 @@ $(document).ready(function() {
     }
 
     function simpletest() {
-        console.log(aliasContextTree);
+        console.log(aliasTree);
     }
+
     setTimeout(simpletest, 5000);
+});
 
-    function AliasContextTree(value) {
-        this.value = value;
-        this.children = [];
+class AliasTree {
+    constructor() {
+        this._root = null;
     }
 
-    AliasContextTree.prototype.addChild = function(value) {
-        var child = new AliasContextTree(value);
-        this.children.push(child);
-        return child;
-    };
-
-    AliasContextTree.prototype.contains = function(value) {
-        if (this.value === value)
-            return true;
-        for (var i = 0; i < this.children.length; i++) {
-            if (this.children[i].contains(value))
-                return true;
+    _traverse(callback) {
+        function walk(node) {
+            callback(node);
+            node.children.forEach(walk);
         }
-        return false;
-    };
 
-});
+        walk(this._root);
+    }
+
+    add(value, parentValue) {
+        var newNode = {
+            value,
+            children: []
+        };
+
+        if (null === this._root) {
+            this._root = newNode;
+            return;
+        }
+
+        this._traverse(function (node) {
+            if (parentValue === node.value) {
+                node.children.push(newNode);
+            }
+        });
+    }
+
+    remove(value) {
+        this._traverse(function (node) {
+            node.children.some(function (childNode, index) {
+                if (value === childNode.value) {
+                    return !!node.children.splice(index, 1);
+                }
+            });
+        });
+    }
+
+    search(value) {
+        let exists = false;
+
+        this._traverse(function (node) {
+            if (value === node.value) {
+                exists = true;
+            }
+        });
+
+        return exists;
+    }
+
+}
