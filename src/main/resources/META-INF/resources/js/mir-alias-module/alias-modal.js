@@ -76,6 +76,12 @@ $(document).ready(function () {
             });
         });
     }
+    
+ // javascript helper methods
+    function isEmpty(value) {
+        return typeof value == 'string' && !value.trim() || typeof value == 'undefined' || value === null;
+    }
+
 });
 
 class AliasTree {
