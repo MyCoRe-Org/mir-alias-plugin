@@ -11,37 +11,51 @@ $(document).ready(function () {
      * root in alias tree)
      */
     let aliasCurrentDocument = '';
+
+
     if (!isEmpty($("#mir-aliaspart").val())) {
-        
+
         aliasCurrentDocument = $("#mir-aliaspart").val();
+
+
         let aliasTree = new AliasTree();
         aliasTree.add(aliasCurrentDocument, 'root');
-        
-        
+
         console.log('alias-modal.js: look into related items dependency to get the full url!')
 
-        var relatedItemIds = [];
+        getAliasContext(getRelatedItemIds(), aliasCurrentDocument, aliasTree);
 
-        $.each($('.mir-related-item-search .form-inline span'), (index, element) => {
-
-            relatedItemIds.push(element.textContent);
-            
-        });
-        
-        console.log('alias-modal.js: related Item mycore Ids are ' + relatedItemIds);
-        getAliasContext(relatedItemIds, aliasCurrentDocument, aliasTree);
-        
         function simpletest() {
             console.log(aliasTree);
         }
 
-        setTimeout(simpletest, 5000); 
+        setTimeout(simpletest, 5000);
     }
-    
-    // observe related item
-    $('.mir-related-item-search .form-inline').observe('added', 'span', function(change) {
 
-        console.log('alias-modal.js: There was added a new related item. Refresh the alias tree.')
+    // observe related item
+    $('.mir-related-item-search .form-inline').observe('added', 'span', function(changedItem) {
+
+        console.log('alias-modal.js: There was added a new related item. Refresh the alias tree.');
+
+        /*
+         * Get empty alias tree
+         */
+        let aliasTree = new AliasTree();
+
+        /*
+         * get current field value from alias
+         */
+        aliasCurrentDocument = $("#mir-aliaspart").val();
+        aliasTree.add(aliasCurrentDocument, 'root');
+
+        getAliasContext(getRelatedItemIds(), aliasCurrentDocument, aliasTree);
+
+        function simpletest() {
+            console.log(aliasTree);
+        }
+
+        setTimeout(simpletest, 5000);
+
     });
 
 
@@ -52,6 +66,26 @@ $(document).ready(function () {
             dataType: "xml",
             type: "GET"
         });
+    }
+
+    function getRelatedItemIds() {
+
+        let relatedItemIds = [];
+
+        $.each($('.mir-related-item-search .form-inline span'), (index, element) => {
+
+            if (!element.textContent || 0 === element.textContent.length) {
+
+                console.log('alias-modal.js: There have been added a new related item without an id to the frontend.')
+            } else {
+                relatedItemIds.push(element.textContent);
+            }
+        });
+
+        console.log('alias-modal.js: related Item mycore Ids are ' + relatedItemIds);
+
+        return relatedItemIds;
+
     }
 
     function getAliasContext(mycoreIds, parent, aliasTree) {
@@ -76,8 +110,8 @@ $(document).ready(function () {
             });
         });
     }
-    
- // javascript helper methods
+
+    // javascript helper methods
     function isEmpty(value) {
         return typeof value == 'string' && !value.trim() || typeof value == 'undefined' || value === null;
     }
@@ -137,5 +171,4 @@ class AliasTree {
 
         return exists;
     }
-
 }
