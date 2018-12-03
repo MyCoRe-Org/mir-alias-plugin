@@ -34,7 +34,7 @@ $(document).ready(function () {
                 var alias = $(data).find('servflag[type="alias"]').text();
                 var relatedItems = [];
 
-                $(data).find('mods\\:relatedItem').each(function () {
+                $(data).find('mods\\:mods > mods\\:relatedItem').each(function () {
                     relatedItems.push($(this).attr('xlink:href'));
                 });
 
