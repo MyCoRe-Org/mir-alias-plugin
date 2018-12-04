@@ -2,14 +2,10 @@ $(document).ready(function () {
 
 
     /*
-     * alias configuration parameter (to do search for a way to resolve this directly from mycore.properties
+     * alias configuration parameter (to do search for a way to resolve this
+     * directly from mycore.properties
      */
     var aliasConfParameter = 'go/';
-    /*
-     * Use promises for the different alias level requests
-     */
-    var promisesAliasResolve = [];
-
     /*
      * Start to get alias (if exists) from the current document (it will be the
      * root in alias tree)
@@ -20,19 +16,20 @@ $(document).ready(function () {
     if (!isEmpty($("#mir-aliaspart").val())) {
 
         aliasCurrentDocument = $("#mir-aliaspart").val();
-
-
         let aliasPaths = [];
+        /*
+         * Use promises for the different alias level requests
+         */
+        var promisesAliasResolve = [];
 
-
-        console.log('alias-modal.js: look into related items dependency to get the full url!')
+        console.log('alias-modal.js: look into related items dependency to get full alias urls!')
 
         $.each(getRelatedItemIds(), (index, mycoreId) => {
-            getAliasContext(mycoreId, aliasCurrentDocument, aliasPaths);
+            promisesAliasResolve.push(getAliasContext(mycoreId, aliasCurrentDocument, aliasPaths));
         });
 
-        function simpletest() {
-            console.log(aliasPaths);
+        $.when.apply($, promisesAliasResolve).then(() => {
+            console.log('alias-modal.js: All possible paths have been resolved!');
 
             $.each(aliasPaths, (index, path) => {
 
@@ -50,35 +47,30 @@ $(document).ready(function () {
             `;
                 $('div[class="mir-fieldset-content alias-fieldset"]').append(urlHtmlTemplate);
             });
-        }
-
-        setTimeout(simpletest, 5000);
+        });
     }
 
     // observe related item
     $('.mir-related-item-search .form-inline').observe('added', 'span', function (changedItem) {
 
         console.log('alias-modal.js: There was added a new related item. Refresh the alias tree.');
-
-
-        let aliasPaths = [];
-
-        /*
-         * get current field value from alias
-         */
-        aliasCurrentDocument = $("#mir-aliaspart").val();
-
-        $.each(getRelatedItemIds(), (index, mycoreId) => {
-            getAliasContext(mycoreId, aliasCurrentDocument, aliasPaths);
-        });
-
-
-        function simpletest() {
-            console.log(aliasPaths);
-        }
-
-        setTimeout(simpletest, 5000);
-
+        // let aliasPaths = [];
+        //
+        // /*
+        // * get current field value from alias
+        // */
+        // aliasCurrentDocument = $("#mir-aliaspart").val();
+        //
+        // $.each(getRelatedItemIds(), (index, mycoreId) => {
+        // getAliasContext(mycoreId, aliasCurrentDocument, aliasPaths);
+        // });
+        //
+        //
+        // function simpletest() {
+        // console.log(aliasPaths);
+        // }
+        //
+        // setTimeout(simpletest, 5000);
     });
 
 
@@ -113,6 +105,15 @@ $(document).ready(function () {
 
     function getAliasContext(mycoreId, path, aliasPaths) {
 
+        console.log('alias-modal.js: Build alias Context for related mycore item with id: ' + mycoreId);
+
+        return $.Deferred((dfd) => {
+            resolveAliasChain(mycoreId, path, aliasPaths, dfd);
+        }).promise();
+    }
+
+    function resolveAliasChain(mycoreId, path, aliasPaths, dfd) {
+
         requestMCRObjectMetadata(mycoreId).then((data) => {
 
             var alias = $(data).find('servflag[type="alias"]').text();
@@ -122,18 +123,18 @@ $(document).ready(function () {
                 relatedItems.push($(this).attr('xlink:href'));
             });
 
-            console.log('alias-modal.js: Build alias Context for mycore id: ' + mycoreId);
-            console.log('alias-modal.js: {mycoreId : ' + mycoreId + ', alias : ' + alias + ', relatedItems : {' + relatedItems + '}');
-
             path = alias + '/' + path;
 
             if (relatedItems && relatedItems.length) {
 
                 $.each(relatedItems, (index, mycoreId) => {
-                    getAliasContext(mycoreId, path, aliasPaths);
+                    resolveAliasChain(mycoreId, path, aliasPaths, dfd);
                 });
             } else {
+                console.log('alias-modal.js: Alias chain was build for path: ' + path);
+
                 aliasPaths.push(path);
+                dfd.resolve();
             }
         });
     }
