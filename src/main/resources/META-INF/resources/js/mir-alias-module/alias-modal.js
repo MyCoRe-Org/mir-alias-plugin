@@ -1,11 +1,4 @@
 $(document).ready(function () {
-
-
-    /*
-     * Use promises for the different alias level requests
-     */
-    var promisesAliasResolve = [];
-    let aliasPaths = [];
     /*
      * alias configuration parameter (to do search for a way to resolve this
      * directly from mycore.properties
@@ -18,14 +11,18 @@ $(document).ready(function () {
     let aliasCurrentDocument = '';
 
 
+    let aliasPaths = [];
+
     if (!isEmpty($("#mir-aliaspart").val())) {
 
         aliasCurrentDocument = $("#mir-aliaspart").val();
 
         console.log('alias-modal.js: look into related items dependency to get full alias urls!')
 
-        $.each(getRelatedItemIds(), (index, mycoreId) => {
-            promisesAliasResolve.push(getAliasContext(mycoreId, aliasCurrentDocument, aliasPaths));
+        $.when.apply($,getAliasResolvePromises([])).then(() => {
+
+            console.log('alias-modal.js: All possible paths have been created!');
+            appendGeneratedUrls(aliasPaths);
         });
     }
 
@@ -34,7 +31,6 @@ $(document).ready(function () {
 
         console.log('alias-modal.js: There was added a new related item. Refresh the alias tree.');
 
-        promisesAliasResolve = [];
         aliasPaths = [];
 
         /*
@@ -47,14 +43,14 @@ $(document).ready(function () {
          */
         $( ".generatedAliasUrl" ).remove();
 
-        // $.each(getRelatedItemIds(), (index, mycoreId) => {
-        //     promisesAliasResolve.push(getAliasContext(mycoreId, aliasCurrentDocument, aliasPaths));
-        // });
+        $.when.apply($,getAliasResolvePromises([])).then(() => {
+
+            console.log('alias-modal.js: All possible paths have been updated!');
+            appendGeneratedUrls(aliasPaths);
+        });
     });
 
-    $.when.apply($, promisesAliasResolve).then(() => {
-        console.log('alias-modal.js: All possible paths have been resolved!');
-
+    function appendGeneratedUrls(aliasPaths) {
         $.each(aliasPaths, (index, path) => {
 
             index = index + 1;
@@ -71,8 +67,16 @@ $(document).ready(function () {
             `;
             $('div[class="mir-fieldset-content alias-fieldset"]').append(urlHtmlTemplate);
         });
-    });
+    }
 
+    function getAliasResolvePromises(promisesAliasResolve) {
+
+        $.each(getRelatedItemIds(), (index, mycoreId) => {
+            promisesAliasResolve.push(getAliasContext(mycoreId, aliasCurrentDocument, aliasPaths));
+        });
+
+        return promisesAliasResolve;
+    }
 
     function requestMCRObjectMetadata(mycoreId) {
 
