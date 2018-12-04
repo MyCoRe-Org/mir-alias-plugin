@@ -23,5 +23,4 @@
       relevant-if="(string-length(text()) &gt; 0)" />
     <xed:cleanup-rule xpath="//mycoreobject/service/servflags[@class='MCRMetaLangText']" relevant-if="servflag" />
   </xed:template>
-
 </xed:template>
