@@ -1,4 +1,10 @@
 $(document).ready(function () {
+
+
+    /*
+     * alias configuration parameter (to do search for a way to resolve this directly from mycore.properties
+     */
+    var aliasConfParameter = 'go/';
     /*
      * Use promises for the different alias level requests
      */
@@ -27,6 +33,23 @@ $(document).ready(function () {
 
         function simpletest() {
             console.log(aliasPaths);
+
+            $.each(aliasPaths, (index, path) => {
+
+                index = index + 1;
+
+                let urlHtmlTemplate = `
+                <div class="form-group">
+                  <label class="col-md-3 control-label">
+                    URL-` + index + `-:
+                  </label>
+                  <div class="col-md-6 ">
+                    <input name="" value="` + webApplicationBaseURL + aliasConfParameter + path + `" class="form-control" type="text">
+                  </div>
+                </div>
+            `;
+                $('div[class="mir-fieldset-content alias-fieldset"]').append(urlHtmlTemplate);
+            });
         }
 
         setTimeout(simpletest, 5000);
