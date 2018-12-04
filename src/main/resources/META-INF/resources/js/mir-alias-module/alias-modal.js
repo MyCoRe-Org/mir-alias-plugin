@@ -2,6 +2,11 @@ $(document).ready(function () {
 
 
     /*
+     * Use promises for the different alias level requests
+     */
+    var promisesAliasResolve = [];
+    let aliasPaths = [];
+    /*
      * alias configuration parameter (to do search for a way to resolve this
      * directly from mycore.properties
      */
@@ -16,27 +21,46 @@ $(document).ready(function () {
     if (!isEmpty($("#mir-aliaspart").val())) {
 
         aliasCurrentDocument = $("#mir-aliaspart").val();
-        let aliasPaths = [];
-        /*
-         * Use promises for the different alias level requests
-         */
-        var promisesAliasResolve = [];
 
         console.log('alias-modal.js: look into related items dependency to get full alias urls!')
 
         $.each(getRelatedItemIds(), (index, mycoreId) => {
             promisesAliasResolve.push(getAliasContext(mycoreId, aliasCurrentDocument, aliasPaths));
         });
+    }
 
-        $.when.apply($, promisesAliasResolve).then(() => {
-            console.log('alias-modal.js: All possible paths have been resolved!');
+    // observe related item
+    $('.mir-related-item-search .form-inline').observe('added', 'span', function (changedItem) {
 
-            $.each(aliasPaths, (index, path) => {
+        console.log('alias-modal.js: There was added a new related item. Refresh the alias tree.');
 
-                index = index + 1;
+        promisesAliasResolve = [];
+        aliasPaths = [];
 
-                let urlHtmlTemplate = `
-                <div class="form-group">
+        /*
+         * get current field value from alias
+         */
+        aliasCurrentDocument = $("#mir-aliaspart").val();
+
+        /*
+         * remove obsolete generated url fields
+         */
+        $( ".generatedAliasUrl" ).remove();
+
+        // $.each(getRelatedItemIds(), (index, mycoreId) => {
+        //     promisesAliasResolve.push(getAliasContext(mycoreId, aliasCurrentDocument, aliasPaths));
+        // });
+    });
+
+    $.when.apply($, promisesAliasResolve).then(() => {
+        console.log('alias-modal.js: All possible paths have been resolved!');
+
+        $.each(aliasPaths, (index, path) => {
+
+            index = index + 1;
+
+            let urlHtmlTemplate = `
+                <div class="form-group generatedAliasUrl">
                   <label class="col-md-3 control-label">
                     URL-` + index + `-:
                   </label>
@@ -45,32 +69,8 @@ $(document).ready(function () {
                   </div>
                 </div>
             `;
-                $('div[class="mir-fieldset-content alias-fieldset"]').append(urlHtmlTemplate);
-            });
+            $('div[class="mir-fieldset-content alias-fieldset"]').append(urlHtmlTemplate);
         });
-    }
-
-    // observe related item
-    $('.mir-related-item-search .form-inline').observe('added', 'span', function (changedItem) {
-
-        console.log('alias-modal.js: There was added a new related item. Refresh the alias tree.');
-        // let aliasPaths = [];
-        //
-        // /*
-        // * get current field value from alias
-        // */
-        // aliasCurrentDocument = $("#mir-aliaspart").val();
-        //
-        // $.each(getRelatedItemIds(), (index, mycoreId) => {
-        // getAliasContext(mycoreId, aliasCurrentDocument, aliasPaths);
-        // });
-        //
-        //
-        // function simpletest() {
-        // console.log(aliasPaths);
-        // }
-        //
-        // setTimeout(simpletest, 5000);
     });
 
 
