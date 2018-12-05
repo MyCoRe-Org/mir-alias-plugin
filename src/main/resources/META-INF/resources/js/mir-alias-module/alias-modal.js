@@ -19,7 +19,7 @@ $(document).ready(function () {
 
         console.log('alias-modal.js: look into related items dependency to get full alias urls!')
 
-        $.when.apply($,getAliasResolvePromises([])).then(() => {
+        $.when.apply($, getAliasResolvePromises([])).then(() => {
 
             console.log('alias-modal.js: All possible paths have been created!');
             appendGeneratedUrls(aliasPaths);
@@ -41,13 +41,40 @@ $(document).ready(function () {
         /*
          * remove obsolete generated url fields
          */
-        $( ".generatedAliasUrl" ).remove();
+        $(".generatedAliasUrl").remove();
 
-        $.when.apply($,getAliasResolvePromises([])).then(() => {
+        $.when.apply($, getAliasResolvePromises([])).then(() => {
 
             console.log('alias-modal.js: All possible paths have been updated!');
             appendGeneratedUrls(aliasPaths);
         });
+    });
+
+    /*
+     * observe modification on alias part to update generated url fields
+     */
+    $("#mir-aliaspart").on("focusin", function () {
+
+        let previousValue = $("#mir-aliaspart").val();
+        $(this).data('previousValue', previousValue);
+
+    }).on("change paste keyup", function () {
+
+        let prevAliaspart = $(this).data('previousValue');
+        let currentAliaspart = $("#mir-aliaspart").val();
+
+        $('.generatedAliasUrlInput').map(function () {
+
+            let generatedUrl = $(this).attr('value');
+
+            if (generatedUrl.endsWith(prevAliaspart)) {
+
+                $(this).attr('value',
+                    generatedUrl.substring(0, generatedUrl.length - prevAliaspart.length) + currentAliaspart);
+            }
+        });
+
+        $(this).data('previousValue', currentAliaspart);
     });
 
     function appendGeneratedUrls(aliasPaths) {
@@ -61,7 +88,7 @@ $(document).ready(function () {
                     URL-` + index + `-:
                   </label>
                   <div class="col-md-6 ">
-                    <input name="" value="` + webApplicationBaseURL + aliasConfParameter + path + `" class="form-control" type="text">
+                    <input name="" value="` + webApplicationBaseURL + aliasConfParameter + path + `" class="form-control generatedAliasUrlInput" type="text">
                   </div>
                 </div>
             `;
