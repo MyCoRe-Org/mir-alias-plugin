@@ -8,23 +8,24 @@ $(document).ready(function () {
      * Start to get alias (if exists) from the current document (it will be the
      * root in alias tree)
      */
-    let aliasCurrentDocument = '';
-
-
+    let aliasCurrentDocument = $("#mir-aliaspart").val();
     let aliasPaths = [];
 
-    if (!isEmpty($("#mir-aliaspart").val())) {
+    console.log('alias-modal.js: look into related items dependency to get full alias urls!')
 
-        aliasCurrentDocument = $("#mir-aliaspart").val();
+    $.when.apply($, getAliasResolvePromises([])).then(() => {
 
-        console.log('alias-modal.js: look into related items dependency to get full alias urls!')
-
-        $.when.apply($, getAliasResolvePromises([])).then(() => {
+        if (aliasPaths.length > 0) {
 
             console.log('alias-modal.js: All possible paths have been created!');
             appendGeneratedUrls(aliasPaths);
-        });
-    }
+
+        } else {
+            console.log('alias-modal.js: There are no alias paths! Create default URL');
+            appendDefaultUrl();
+        }
+    });
+
 
     // observe related item
     $('.mir-related-item-search .form-inline').observe('added', 'span', function (changedItem) {
@@ -45,8 +46,13 @@ $(document).ready(function () {
 
         $.when.apply($, getAliasResolvePromises([])).then(() => {
 
-            console.log('alias-modal.js: All possible paths have been updated!');
-            appendGeneratedUrls(aliasPaths);
+            if (aliasPaths.length > 0) {
+                console.log('alias-modal.js: All possible paths have been updated!');
+                appendGeneratedUrls(aliasPaths);
+            } else {
+                console.log('alias-modal.js: There are no alias paths after update! Create default URL');
+                appendDefaultUrl();
+            }
         });
     });
 
@@ -76,6 +82,21 @@ $(document).ready(function () {
 
         $(this).data('previousValue', currentAliaspart);
     });
+
+    function appendDefaultUrl() {
+
+        let defaultUrl = `
+                <div class="form-group generatedAliasUrl">
+                  <label class="col-md-3 control-label">
+                    URL:
+                  </label>
+                  <div class="col-md-6 ">
+                    <input name="" value="` + webApplicationBaseURL + aliasConfParameter + $("#mir-aliaspart").val() + `" class="form-control generatedAliasUrlInput" type="text">
+                  </div>
+                </div>
+            `;
+        $('div[class="mir-fieldset-content alias-fieldset"]').append(defaultUrl);
+    }
 
     function appendGeneratedUrls(aliasPaths) {
         $.each(aliasPaths, (index, path) => {
