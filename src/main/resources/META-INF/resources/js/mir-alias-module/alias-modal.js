@@ -131,7 +131,8 @@ $(document).ready(function () {
         return $.ajax({
             url: webApplicationBaseURL + "api/v2/objects/" + mycoreId,
             dataType: "xml",
-            type: "GET"
+            type: "GET",
+            cache: false    
         });
     }
 
