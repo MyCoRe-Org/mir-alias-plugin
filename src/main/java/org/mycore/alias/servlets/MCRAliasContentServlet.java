@@ -1,6 +1,11 @@
 package org.mycore.alias.servlets;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
@@ -18,9 +23,11 @@ import org.mycore.access.MCRAccessManager;
 import org.mycore.common.MCRSessionMgr;
 import org.mycore.common.config.MCRConfiguration;
 import org.mycore.common.content.MCRContent;
+import org.mycore.common.content.MCRPathContent;
 import org.mycore.datamodel.common.MCRXMLMetadataManager;
 import org.mycore.datamodel.metadata.MCRMetadataManager;
 import org.mycore.datamodel.metadata.MCRObjectID;
+import org.mycore.datamodel.niofs.MCRPath;
 import org.mycore.frontend.servlets.MCRContentServlet;
 import org.mycore.solr.MCRSolrClientFactory;
 import org.mycore.solr.MCRSolrUtils;
@@ -133,6 +140,80 @@ public class MCRAliasContentServlet extends MCRContentServlet {
             if (aliasPathContext.startsWith("/")) {
 
                 aliasPathContext = parsePath(aliasPathContext);
+
+                if (!aliasPathContext.contains("/")) {
+
+                    String possibleFilename = aliasPathContext;
+
+                    /*
+                     * Get document Id as MCRObjectID
+                     */
+                    MCRObjectID mcrObjIdFromAliasPart = MCRObjectID.getInstance(objectId);
+
+                    /*
+                     * get derivatives
+                     */
+                    List<MCRObjectID> derivatesForDocument = MCRMetadataManager.getDerivateIds(mcrObjIdFromAliasPart, 0,
+                            TimeUnit.MILLISECONDS);
+
+                    for (MCRObjectID mcrDerivateID : derivatesForDocument) {
+
+                        LOGGER.debug("Looking in derivate " + mcrDerivateID.toString() + " for filename: "
+                                + possibleFilename);
+
+                        MCRPath mcrPath = MCRPath.getPath(mcrDerivateID.toString(), possibleFilename);
+
+                        /*
+                         * Is the specified filename existing in the derivate?
+                         *  -> If no, continue iteration through derivate list
+                         */
+                        try {
+                            Files.readAttributes(mcrPath, BasicFileAttributes.class);
+                        } catch (Exception exc) {
+
+                            LOGGER.info(
+                                    mcrDerivateID.toString() + ":/ -> " + possibleFilename + " : file does not exist");
+                            continue;
+                        }
+                        LOGGER.info(possibleFilename + " was found in derivate " + mcrDerivateID.toString());
+
+                        /*
+                         * permission check on derivate
+                         */
+                        if (!MCRAccessManager.checkPermissionForReadingDerivate(mcrDerivateID.toString())) {
+                            LOGGER.info("AccessForbidden to {}", request.getPathInfo());
+                            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                            return null;
+                        }
+
+                        MCRContent mcrContent = new MCRPathContent(mcrPath);
+
+                        final String aliasFilePattern = configuration.getString(FILE_PATTERN_LAYOUTSERVICE, "");
+
+                        /*
+                         * Should the file be transformed via getLayoutService() ?
+                         */
+                        if (!aliasFilePattern.isEmpty() && possibleFilename.matches(aliasFilePattern)) {
+
+                            try {
+
+                                LOGGER.info("File will be transformed via MCRLayoutService: " + mcrDerivateID.toString()
+                                        + "/" + possibleFilename);
+                                return getLayoutService().getTransformedContent(request, response, mcrContent);
+
+                            } catch (TransformerException | SAXException e) {
+                                throw new IOException("could not transform content", e);
+                            }
+
+                        } else {
+
+                            LOGGER.info("File will be return as MCRPathContent: " + mcrDerivateID.toString() + "/"
+                                    + possibleFilename);
+
+                            return mcrContent;
+                        }
+                    }
+                }
 
                 /*
                  * look for related items
