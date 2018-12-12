@@ -120,7 +120,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
         if (contentFromAliasPath == null) {
             // Error redirect
-            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Requested Alias was not found: " + path);
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, "Requested Alias cannot be resolved on path: " + path);
         }
         return contentFromAliasPath;
     }
@@ -159,18 +159,13 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                                     (String) relatedDocument.getFieldValue(OBJECT_ID), request, response);
                         }
                     }
-                } catch (SolrServerException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                } catch (SolrServerException | IOException e) {
+                    LOGGER.error("Error in communication with solr server: " + e.getMessage());
                 }
             }
 
             LOGGER.info("The alias path context " + aliasPathContext
                     + " does not exist for document/derivate relations on " + objectId);
-            return null;
         } else {
 
             /*
@@ -197,8 +192,9 @@ public class MCRAliasContentServlet extends MCRContentServlet {
              * user have not the permission  
              */
             LOGGER.info("Current user have not the permission to resolve the document via alias " + fullPath);
-            return null;
         }
+
+        return null;
     }
 
     /**
