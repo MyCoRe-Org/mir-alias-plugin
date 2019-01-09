@@ -4,6 +4,26 @@ This plugin extends this url with an alias mechanismus. The mir-admin document f
 
 With a given alias mechanismus the previous URL is also reachable via created alias-URL, for example "http://.../mir/go/oa/publicationsfonds"
 
+## Features
+### Alias basic resolvement
+Alias allocation is affiliated to mir editor-admins.xed.
+After save the document alias is available via: 
+
+**{webApplicationBaseURL}/{aliasConfParameter}/{alias-part}**.
+
+For the shown case alias is available through **http://localhost:8291/go/sozial.geschichte-online**
+
+
+### Related Items with Alias Structure
+The Alias plugin recognizes alias structure in related items.You can allocate this 
+way an expanded alias structure. The URL will be generated automatically based on the information
+from your alias structure.
+
+### Multiple Aliases
+The alias structure is based on a tree. It is possible to assign multiple alises.
+
+
+
 ## Installation instructions (As mir-enduser)
 
 1. Download the project from this repository and place it on your computer
