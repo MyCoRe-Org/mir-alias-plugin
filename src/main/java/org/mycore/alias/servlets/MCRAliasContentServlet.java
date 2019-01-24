@@ -199,6 +199,8 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                                 LOGGER.info("File will be transformed via MCRLayoutService: " + mcrDerivateID.toString()
                                         + "/" + possibleFilename);
+                                request.setAttribute("XSL.MCRObjectID", mcrObjIdFromAliasPart.toString());
+                                request.setAttribute("XSL.MCRDerivateID", mcrDerivateID.toString());
                                 return getLayoutService().getTransformedContent(request, response, mcrContent);
 
                             } catch (TransformerException | SAXException e) {
