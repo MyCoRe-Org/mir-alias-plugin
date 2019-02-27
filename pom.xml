@@ -6,10 +6,12 @@
   <parent>
     <groupId>org.mycore.mir</groupId>
     <artifactId>mir-parent</artifactId>
-    <version>2019.05-SNAPSHOT</version>
+    <version>2018.11</version>
   </parent>
   <artifactId>mir-alias-plugin</artifactId>
   <packaging>jar</packaging>
+  
+  <version>2018.11-SNAPSHOT</version>
 
   <name>mir-alias-plugin</name>
   <url>http://maven.apache.org</url>

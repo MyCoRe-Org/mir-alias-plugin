@@ -176,8 +176,10 @@ $(document).ready(function () {
                 relatedItems.push($(this).attr('xlink:href'));
             });
 
-            path = alias + '/' + path;
-
+            if (!isEmpty(alias)) {
+                path = alias + '/' + path;
+            }
+            
             if (relatedItems && relatedItems.length) {
 
                 $.each(relatedItems, (index, mycoreId) => {
