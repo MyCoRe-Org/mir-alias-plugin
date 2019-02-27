@@ -233,7 +233,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                         String currentAlias = (String) relatedDocument.getFieldValue(ALIAS);
 
-                        if (aliasPathContext.startsWith(currentAlias)) {
+                        if (currentAlias != null && aliasPathContext.startsWith(currentAlias)) {
 
                             aliasPathContext = aliasPathContext
                                     .replaceFirst((String) relatedDocument.getFieldValue(ALIAS), "");
