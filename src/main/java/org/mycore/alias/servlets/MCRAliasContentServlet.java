@@ -224,7 +224,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                 LOGGER.info("Check if alias path context " + aliasPathContext
                         + " exists for document/derivate relations on " + objectId);
 
-                String searchStr = "mods.relatedItem:" + objectId + " limit=max";
+                String searchStr = "mods.relatedItem:" + objectId;
 
                 try {
                     SolrDocumentList relatedDocuments = resolveSolrDocuments(searchStr);
@@ -346,6 +346,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
         SolrQuery query = new SolrQuery();
 
         query.setQuery(searchStr);
+        query.setRows(300);
         query.setStart(0);
 
         QueryResponse response;
