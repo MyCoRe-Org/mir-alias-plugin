@@ -24,7 +24,7 @@ The alias structure is based on a tree. It is possible to assign multiple alises
 
 
 
-## Installation instructions (As mir-enduser)
+## Installation instructions for mir lts 2019.06 (As mir-enduser)
 
 1. Download the project from this repository and place it on your computer
 
@@ -39,11 +39,10 @@ The alias structure is based on a tree. It is possible to assign multiple alises
 (Windows Systems C:\Users\User\AppData\Local\MyCoRe\mirapplication\lib) <br />
 (Linux Systems /home/user/.mycore/mirapplication/lib)
 
-6. Readjust solr schema with new alias parameter (http://www.mycore.de/documentation/getting_started/solr_7.html)
-
-Add the following lines to schema.xml 
-
-		<!-- Alias (/go/* URLs) -->
-		<field name="alias" type="string" indexed="true" stored="true" multiValued="false"/>
-
-
+6. The alias plugin uses an alias field within the index. For this purpose, the plugin brings its own schema extensions. It is necessary to reload the solr schema (for further information have a look on solr mycore documentation http://www.mycore.de/documentation/search/using_solr.html). In case of a standard solr core installation (the main core is named „main“) open the mir web cli:
+-	run command „reload solr configuration main in core main“
+	* This command synchronizes the solr main core with the solr schema from this plugin
+-	Reload the mir core with solr webadmin (Core Admin - reload)
+	* You can do a quick check in the solr webadmin via mir schema menu item (alias field should be there now)
+-	Reindex solr with the rules from the navigation plugin with command „rebuild solr metadata and content index in core main“
+	* solr entries should support the alias field now
