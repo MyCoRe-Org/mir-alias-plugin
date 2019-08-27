@@ -86,8 +86,8 @@ $(document).ready(function () {
     function appendDefaultUrl() {
 
         let defaultUrl = `
-                <div class="form-group generatedAliasUrl">
-                  <label class="col-md-3 control-label">
+                <div class="form-group row generatedAliasUrl">
+                  <label class="col-md-3 col-form-label text-right">
                     URL:
                   </label>
                   <div class="col-md-6 ">
@@ -104,8 +104,8 @@ $(document).ready(function () {
             index = index + 1;
 
             let urlHtmlTemplate = `
-                <div class="form-group generatedAliasUrl">
-                  <label class="col-md-3 control-label">
+                <div class="form-group row generatedAliasUrl">
+                  <label class="col-md-3 col-form-label text-right">
                     URL-` + index + `-:
                   </label>
                   <div class="col-md-6 ">
