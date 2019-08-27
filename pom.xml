@@ -1,16 +1,15 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.mycore.mir</groupId>
     <artifactId>mir-parent</artifactId>
-    <version>2019.05</version>
+    <version>2019.06.1-SNAPSHOT</version>
   </parent>
   <artifactId>mir-alias-plugin</artifactId>
   <packaging>jar</packaging>
- 
+
 
   <name>mir-alias-plugin</name>
   <url>http://maven.apache.org</url>
@@ -77,7 +76,6 @@
   </build>
 
   <dependencies>
-
     <!-- mycore dependencies -->
     <dependency>
       <groupId>org.mycore</groupId>
@@ -108,9 +106,6 @@
       <groupId>org.jdom</groupId>
       <artifactId>jdom2</artifactId>
     </dependency>
-
-
-
   </dependencies>
 
 </project>
