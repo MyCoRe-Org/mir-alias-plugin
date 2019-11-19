@@ -3,7 +3,7 @@ $(document).ready(function () {
      * alias configuration parameter (to do search for a way to resolve this
      * directly from mycore.properties
      */
-    var aliasConfParameter = 'go/';
+    var aliasConfParameter = ['aliasPrefix1/', 'aliasPrefix2/'];
     /*
      * Start to get alias (if exists) from the current document (it will be the
      * root in alias tree)
@@ -85,35 +85,39 @@ $(document).ready(function () {
 
     function appendDefaultUrl() {
 
-        let defaultUrl = `
+        aliasConfParameter.forEach((currentAliasParam) => {
+            let defaultUrl = `
                 <div class="form-group row generatedAliasUrl">
                   <label class="col-md-3 col-form-label text-right">
-                    URL:
+                    URL (Prefix ` + currentAliasParam + `):
                   </label>
                   <div class="col-md-6 ">
-                    <input name="" value="` + webApplicationBaseURL + aliasConfParameter + $("#mir-aliaspart").val() + `" class="form-control generatedAliasUrlInput" type="text">
+                    <input name="" value="` + webApplicationBaseURL + currentAliasParam + $("#mir-aliaspart").val() + `" class="form-control generatedAliasUrlInput" type="text">
                   </div>
                 </div>
             `;
-        $('div[class="mir-fieldset-content alias-fieldset"]').append(defaultUrl);
+            $('div[class="mir-fieldset-content alias-fieldset"]').append(defaultUrl);
+        });
     }
 
     function appendGeneratedUrls(aliasPaths) {
-        $.each(aliasPaths, (index, path) => {
+        aliasConfParameter.forEach((currentAliasParam) => {
+            $.each(aliasPaths, (index, path) => {
 
-            index = index + 1;
+                index = index + 1;
 
-            let urlHtmlTemplate = `
+                let urlHtmlTemplate = `
                 <div class="form-group row generatedAliasUrl">
                   <label class="col-md-3 col-form-label text-right">
-                    URL-` + index + `-:
+                    URL-` + index + ` (Prefix ` + currentAliasParam + `):
                   </label>
                   <div class="col-md-6 ">
-                    <input name="" value="` + webApplicationBaseURL + aliasConfParameter + path + `" class="form-control generatedAliasUrlInput" type="text">
+                    <input name="" value="` + webApplicationBaseURL + currentAliasParam + path + `" class="form-control generatedAliasUrlInput" type="text">
                   </div>
                 </div>
             `;
-            $('div[class="mir-fieldset-content alias-fieldset"]').append(urlHtmlTemplate);
+                $('div[class="mir-fieldset-content alias-fieldset"]').append(urlHtmlTemplate);
+            });
         });
     }
 
@@ -132,7 +136,7 @@ $(document).ready(function () {
             url: webApplicationBaseURL + "api/v2/objects/" + mycoreId,
             dataType: "xml",
             type: "GET",
-            cache: false    
+            cache: false
         });
     }
 
@@ -179,7 +183,7 @@ $(document).ready(function () {
             if (!isEmpty(alias)) {
                 path = alias + '/' + path;
             }
-            
+
             if (relatedItems && relatedItems.length) {
 
                 $.each(relatedItems, (index, mycoreId) => {
