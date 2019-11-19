@@ -2,7 +2,7 @@ $(document).ready(function () {
     /*
      * alias configuration parameter (Use MCR.Alias.prefix in mycore.properties)
      */
-    var aliasConfParameter = typeof mcrPrefixConf !== 'undefined' && mcrPrefixConf ? mcrPrefixConf.split(',') : ['go'];
+    var aliasConfParameter = typeof mcrPrefixConf !== 'undefined' && mcrPrefixConf ? mcrPrefixConf.replace(/ /g,'').split(',') : ['go'];
     /*
      * Start to get alias (if exists) from the current document (it will be the
      * root in alias tree)
