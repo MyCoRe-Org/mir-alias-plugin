@@ -91,7 +91,8 @@ $(document).ready(function () {
                     URL (Prefix ` + currentAliasParam + `):
                   </label>
                   <div class="col-md-6 ">
-                    <input name="" value="` + webApplicationBaseURL + currentAliasParam + $("#mir-aliaspart").val() + `" class="form-control generatedAliasUrlInput" type="text">
+                    <input name="" value="` + webApplicationBaseURL +
+                currentAliasParam.replace(/^\/+|\/+$/g, '') + '/' + $("#mir-aliaspart").val() + `" class="form-control generatedAliasUrlInput" type="text">
                   </div>
                 </div>
             `;
@@ -111,7 +112,8 @@ $(document).ready(function () {
                     URL-` + index + ` (Prefix ` + currentAliasParam + `):
                   </label>
                   <div class="col-md-6 ">
-                    <input name="" value="` + webApplicationBaseURL + currentAliasParam + path + `" class="form-control generatedAliasUrlInput" type="text">
+                    <input name="" value="` + webApplicationBaseURL +
+                    currentAliasParam.replace(/^\/+|\/+$/g, '') + '/' + path + `" class="form-control generatedAliasUrlInput" type="text">
                   </div>
                 </div>
             `;
