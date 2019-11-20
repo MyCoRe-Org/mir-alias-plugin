@@ -48,8 +48,8 @@ public class MCRAliasStartupHandler implements AutoExecutable {
 
             while (aliasPrefixTokenizer.hasMoreTokens()) {
 
-                String currentPrefix = aliasPrefixTokenizer.nextToken().trim();
-                currentPrefix = StringUtils.strip(currentPrefix, "/").trim();
+                String currentPrefix = aliasPrefixTokenizer.nextToken().replaceAll("\\s+","");
+                currentPrefix = StringUtils.strip(currentPrefix, "/");
 
                 aliasServletRegistration.addMapping("/" + currentPrefix + "/*");
 
