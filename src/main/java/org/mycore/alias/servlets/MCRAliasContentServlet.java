@@ -228,7 +228,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                 try {
                     SolrDocumentList relatedDocuments = resolveSolrDocuments(searchStr);
-
+                    
                     for (SolrDocument relatedDocument : relatedDocuments) {
 
                         String currentAlias = (String) relatedDocument.getFieldValue(ALIAS);
@@ -247,6 +247,15 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                                     (String) relatedDocument.getFieldValue(OBJECT_ID), request, response);
                         }
                     }
+                    
+                    if (relatedDocuments.getNumFound() == 0) {
+                        LOGGER.info("Process Alias Path Context: No Documents found with searchStr: [" + searchStr + "]");
+                    } else {
+                        LOGGER.info("Process Alias Path Context: Solr query [" + searchStr + "] has got "
+                            + relatedDocuments.getNumFound()
+                            + " documents, but these documents does not include aliasPathContext " + aliasPathContext);
+                    }
+                    
                 } catch (SolrServerException | IOException e) {
                     LOGGER.error("Error in communication with solr server: " + e.getMessage());
                 }
