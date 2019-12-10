@@ -241,7 +241,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                             aliasPathContext = aliasPathContext
                                     .replaceFirst((String) relatedDocument.getFieldValue(ALIAS), "");
 
-                            LOGGER.info("Process Alias Context: Remove " + currentAlias + " from current aliasPathContext - New Alias Path Context is [" + aliasPathContext + "]");
+                            LOGGER.info("Process Alias Path Context: Remove " + currentAlias + " from current aliasPathContext - New Alias Path Context is [" + aliasPathContext + "]");
                             
                             return getContentFromAliasPath(aliasPathContext, fullPath,
                                     (String) relatedDocument.getFieldValue(OBJECT_ID), request, response);
