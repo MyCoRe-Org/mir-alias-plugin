@@ -229,31 +229,38 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                 try {
                     SolrDocumentList relatedDocuments = resolveSolrDocuments(searchStr);
-
+                    
+                    String nextAliasPathContextAfter = aliasPathContext;
+                    String relatedObjectId = null;
+                    
                     for (SolrDocument relatedDocument : relatedDocuments) {
 
                         String currentAliasOrig = (String) relatedDocument.getFieldValue(ALIAS);
-                        
+
                         if (currentAliasOrig != null) {
                             String currentAlias = currentAliasOrig.toLowerCase();
                             String possibleAliasPathContextAfter = aliasPathContext.replaceFirst(currentAlias, "");
                             
-                            if (aliasPathContext.startsWith(currentAlias) && 
-                                (possibleAliasPathContextAfter.startsWith("/") || possibleAliasPathContextAfter.trim().isEmpty())) {
-    
-                                LOGGER.debug("Process Alias Path Context: Alias Path Context " + aliasPathContext
-                                    + " found in Document " + (String) relatedDocument.getFieldValue(OBJECT_ID));
-                                
-                                aliasPathContext = possibleAliasPathContextAfter;
-    
-                                LOGGER.debug("Process Alias Path Context: Remove " + currentAlias + " from current aliasPathContext - New Alias Path Context is [" + aliasPathContext + "]");
-    
-                                return getContentFromAliasPath(aliasPathContext, fullPath,
-                                        (String) relatedDocument.getFieldValue(OBJECT_ID), request, response);
+                            if (nextAliasPathContextAfter.length() > possibleAliasPathContextAfter.length()) {
+                                nextAliasPathContextAfter = possibleAliasPathContextAfter;
+                                relatedObjectId = (String) relatedDocument.getFieldValue(OBJECT_ID);
                             }
                         }
                     }
+                    
+                    if (relatedObjectId != null) {
 
+                        LOGGER.debug("Process Alias Path Context: Alias Path Context " + aliasPathContext
+                            + " found in Document " + relatedObjectId);
+                        
+                        aliasPathContext = nextAliasPathContextAfter;
+
+                        LOGGER.debug("Process Alias Path Context:  New Alias Path Context is [" + aliasPathContext + "]");
+
+                        return getContentFromAliasPath(aliasPathContext, fullPath, relatedObjectId, request, response);
+                    }
+                    
+                    
                     if (relatedDocuments.getNumFound() == 0) {
                         LOGGER.debug("Process Alias Path Context: No Documents found with searchStr: [" + searchStr + "]");
                     } else {
