@@ -236,13 +236,15 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                         
                         if (currentAliasOrig != null) {
                             String currentAlias = currentAliasOrig.toLowerCase();
-    
-                            if (aliasPathContext.startsWith(currentAlias)) {
+                            String possibleAliasPathContextAfter = aliasPathContext.replaceFirst(currentAlias, "");
+                            
+                            if (aliasPathContext.startsWith(currentAlias) && 
+                                (possibleAliasPathContextAfter.startsWith("/") || possibleAliasPathContextAfter.trim().isEmpty())) {
     
                                 LOGGER.debug("Process Alias Path Context: Alias Path Context " + aliasPathContext
                                     + " found in Document " + (String) relatedDocument.getFieldValue(OBJECT_ID));
                                 
-                                aliasPathContext = aliasPathContext.replaceFirst(currentAlias, "");
+                                aliasPathContext = possibleAliasPathContextAfter;
     
                                 LOGGER.debug("Process Alias Path Context: Remove " + currentAlias + " from current aliasPathContext - New Alias Path Context is [" + aliasPathContext + "]");
     
