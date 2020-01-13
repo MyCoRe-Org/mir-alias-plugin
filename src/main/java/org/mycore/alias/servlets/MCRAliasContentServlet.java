@@ -53,7 +53,6 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
     // Solr Fieldnames
     private static final String OBJECT_ID = "id";
-
     private static final String ALIAS = "alias";
 
     public static final String FILE_PATTERN_LAYOUTSERVICE = "MCR.Alias.Filepattern";
@@ -79,8 +78,8 @@ public class MCRAliasContentServlet extends MCRContentServlet {
             return null;
         }
 
-        LOGGER.debug("Start try to get MCRContent via MCRAliasContentServlet on path: " + path);
-        LOGGER.debug("Use MCRSession: " + MCRSessionMgr.getCurrentSessionID());
+        LOGGER.info("Start try to get MCRContent via MCRAliasContentServlet on path: " + path);
+        LOGGER.info("Use MCRSession: " + MCRSessionMgr.getCurrentSessionID());
 
         /*
          * Take the whole path and decrease it to get root alias!
@@ -102,13 +101,13 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
             if (!rootAlias.isEmpty() && rootAlias.get(0) != null) {
 
-                LOGGER.debug("Alias was found with Object id: " + rootAlias.get(0).getFieldValue(OBJECT_ID));
+                LOGGER.info("Alias was found with Object id: " + rootAlias.get(0).getFieldValue(OBJECT_ID));
 
                 String aliasPathContextOrig = parsePath(path).replaceFirst(decreasedPath, "");
                 String aliasPathContext = aliasPathContextOrig.toLowerCase();
 
                 contentFromAliasPath = getContentFromAliasPath(aliasPathContext, path,
-                    (String) rootAlias.get(0).getFieldValue(OBJECT_ID), request, response);
+                        (String) rootAlias.get(0).getFieldValue(OBJECT_ID), request, response);
 
                 isContentResolved = contentFromAliasPath != null;
             }
@@ -120,8 +119,8 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                     lastIndexSlash = decreasedPath.lastIndexOf('/');
                 } else {
 
-                    LOGGER.debug("The alias path " + path
-                        + " can not be resolved. Return 'Requested Alias was not found' error message.");
+                    LOGGER.info("The alias path " + path
+                            + " can not be resolved. Return 'Requested Alias was not found' error message.");
                     decreasedPath = "";
                 }
             }
@@ -135,7 +134,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
     }
 
     private MCRContent getContentFromAliasPath(String aliasPathContext, String fullPath, String objectId,
-        HttpServletRequest request, HttpServletResponse response) throws IOException {
+            HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         if (!aliasPathContext.isEmpty()) {
 
@@ -156,12 +155,12 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                      * get derivatives
                      */
                     List<MCRObjectID> derivatesForDocument = MCRMetadataManager.getDerivateIds(mcrObjIdFromAliasPart, 0,
-                        TimeUnit.MILLISECONDS);
+                            TimeUnit.MILLISECONDS);
 
                     for (MCRObjectID mcrDerivateID : derivatesForDocument) {
 
                         LOGGER.debug("Looking in derivate " + mcrDerivateID.toString() + " for filename: "
-                            + possibleFilename);
+                                + possibleFilename);
 
                         MCRPath mcrPath = MCRPath.getPath(mcrDerivateID.toString(), possibleFilename);
 
@@ -173,17 +172,17 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                             Files.readAttributes(mcrPath, BasicFileAttributes.class);
                         } catch (Exception exc) {
 
-                            LOGGER.debug(
-                                mcrDerivateID.toString() + ":/ -> " + possibleFilename + " : file does not exist");
+                            LOGGER.info(
+                                    mcrDerivateID.toString() + ":/ -> " + possibleFilename + " : file does not exist");
                             continue;
                         }
-                        LOGGER.debug(possibleFilename + " was found in derivate " + mcrDerivateID.toString());
+                        LOGGER.info(possibleFilename + " was found in derivate " + mcrDerivateID.toString());
 
                         /*
                          * permission check on derivate
                          */
                         if (!MCRAccessManager.checkPermissionForReadingDerivate(mcrDerivateID.toString())) {
-                            LOGGER.debug("AccessForbidden to {}", request.getPathInfo());
+                            LOGGER.info("AccessForbidden to {}", request.getPathInfo());
                             response.sendError(HttpServletResponse.SC_FORBIDDEN);
                             return null;
                         }
@@ -199,8 +198,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                             try {
 
-                                LOGGER
-                                    .debug("File will be transformed via MCRLayoutService: " + mcrDerivateID.toString()
+                                LOGGER.info("File will be transformed via MCRLayoutService: " + mcrDerivateID.toString()
                                         + "/" + possibleFilename);
                                 request.setAttribute("XSL.MCRObjectID", mcrObjIdFromAliasPart.toString());
                                 request.setAttribute("XSL.MCRDerivateID", mcrDerivateID.toString());
@@ -212,8 +210,8 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                         } else {
 
-                            LOGGER.debug("File will be return as MCRPathContent: " + mcrDerivateID.toString() + "/"
-                                + possibleFilename);
+                            LOGGER.info("File will be return as MCRPathContent: " + mcrDerivateID.toString() + "/"
+                                    + possibleFilename);
 
                             return mcrContent;
                         }
@@ -224,8 +222,8 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                  * look for related items
                  * 
                  */
-                LOGGER.debug("Check if alias path context " + aliasPathContext
-                    + " exists for document/derivate relations on " + objectId);
+                LOGGER.info("Check if alias path context " + aliasPathContext
+                        + " exists for document/derivate relations on " + objectId);
 
                 String searchStr = "mods.relatedItem:" + objectId;
 
@@ -235,30 +233,27 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                     for (SolrDocument relatedDocument : relatedDocuments) {
 
                         String currentAliasOrig = (String) relatedDocument.getFieldValue(ALIAS);
-
+                        
                         if (currentAliasOrig != null) {
                             String currentAlias = currentAliasOrig.toLowerCase();
-
+    
                             if (aliasPathContext.startsWith(currentAlias)) {
-
+    
                                 LOGGER.debug("Process Alias Path Context: Alias Path Context " + aliasPathContext
                                     + " found in Document " + (String) relatedDocument.getFieldValue(OBJECT_ID));
-
+                                
                                 aliasPathContext = aliasPathContext.replaceFirst(currentAlias, "");
-
-                                LOGGER.debug("Process Alias Path Context: Remove " + currentAlias
-                                    + " from current aliasPathContext - New Alias Path Context is [" + aliasPathContext
-                                    + "]");
-
+    
+                                LOGGER.debug("Process Alias Path Context: Remove " + currentAlias + " from current aliasPathContext - New Alias Path Context is [" + aliasPathContext + "]");
+    
                                 return getContentFromAliasPath(aliasPathContext, fullPath,
-                                    (String) relatedDocument.getFieldValue(OBJECT_ID), request, response);
+                                        (String) relatedDocument.getFieldValue(OBJECT_ID), request, response);
                             }
                         }
                     }
 
                     if (relatedDocuments.getNumFound() == 0) {
-                        LOGGER.debug(
-                            "Process Alias Path Context: No Documents found with searchStr: [" + searchStr + "]");
+                        LOGGER.debug("Process Alias Path Context: No Documents found with searchStr: [" + searchStr + "]");
                     } else {
                         LOGGER.debug("Process Alias Path Context: Solr query [" + searchStr + "] has got "
                             + relatedDocuments.getNumFound()
@@ -270,8 +265,8 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                 }
             }
 
-            LOGGER.debug("The alias path context " + aliasPathContext
-                + " does not exist for document/derivate relations on " + objectId);
+            LOGGER.info("The alias path context " + aliasPathContext
+                    + " does not exist for document/derivate relations on " + objectId);
         } else {
 
             /*
@@ -279,13 +274,13 @@ public class MCRAliasContentServlet extends MCRContentServlet {
              */
             MCRObjectID mcrObjId = MCRObjectID.getInstance(objectId);
 
-            LOGGER.debug("Check read permission on MyCoRe Object Id " + objectId + " with current user.");
+            LOGGER.info("Check read permission on MyCoRe Object Id " + objectId + " with current user.");
             if (MCRAccessManager.checkPermission(mcrObjId, MCRAccessManager.PERMISSION_READ)
-                && (MCRMetadataManager.exists(mcrObjId))) {
+                    && (MCRMetadataManager.exists(mcrObjId))) {
 
                 MCRContent metadataContent = metadataManager.retrieveContent(mcrObjId);
 
-                LOGGER.debug("Start to do layout transformation with retreived metadata content");
+                LOGGER.info("Start to do layout transformation with retreived metadata content");
 
                 try {
                     return getLayoutService().getTransformedContent(request, response, metadataContent);
@@ -297,7 +292,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
             /*
              * user have not the permission  
              */
-            LOGGER.debug("Current user have not the permission to resolve the document via alias " + fullPath);
+            LOGGER.info("Current user have not the permission to resolve the document via alias " + fullPath);
         }
 
         return null;
@@ -317,13 +312,13 @@ public class MCRAliasContentServlet extends MCRContentServlet {
         try {
 
             String searchStr = ALIAS + ":%filter%".replace("%filter%",
-                aliasPart != null && !aliasPart.isEmpty() ? MCRSolrUtils.escapeSearchValue(aliasPart) : "*");
+                    aliasPart != null && !aliasPart.isEmpty() ? MCRSolrUtils.escapeSearchValue(aliasPart) : "*");
 
             results = resolveSolrDocuments(searchStr);
 
             if (results.size() > 1) {
 
-                LOGGER.debug("Multiple MCR Objects found for Alias " + aliasPart);
+                LOGGER.info("Multiple MCR Objects found for Alias " + aliasPart);
             }
 
         } catch (SolrServerException | IOException e) {
