@@ -233,6 +233,8 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                     String nextAliasPathContextAfter = aliasPathContext;
                     String relatedObjectId = null;
                     
+                    LOGGER.debug("Process Alias Path Context: Try to shrink Alias Path Context " + aliasPathContext);
+                    
                     for (SolrDocument relatedDocument : relatedDocuments) {
 
                         String currentAliasOrig = (String) relatedDocument.getFieldValue(ALIAS);
@@ -242,8 +244,10 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                             String possibleAliasPathContextAfter = aliasPathContext.replaceFirst(currentAlias, "");
                             
                             if (nextAliasPathContextAfter.length() > possibleAliasPathContextAfter.length()) {
-                                nextAliasPathContextAfter = possibleAliasPathContextAfter;
+                                nextAliasPathContextAfter = possibleAliasPathContextAfter;       
                                 relatedObjectId = (String) relatedDocument.getFieldValue(OBJECT_ID);
+                                
+                                LOGGER.debug("---- Process Alias Path Context: " + currentAlias + " found in " + aliasPathContext + ". Shrink aliasPathContext into " + nextAliasPathContextAfter);
                             }
                         }
                     }
