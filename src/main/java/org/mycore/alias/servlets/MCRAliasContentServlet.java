@@ -103,7 +103,8 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                 LOGGER.info("Alias was found with Object id: " + rootAlias.get(0).getFieldValue(OBJECT_ID));
 
-                String aliasPathContext = parsePath(path).replaceFirst(decreasedPath, "");
+                String aliasPathContextOrig = parsePath(path).replaceFirst(decreasedPath, "");
+                String aliasPathContext = aliasPathContextOrig.toLowerCase();
 
                 contentFromAliasPath = getContentFromAliasPath(aliasPathContext, path,
                         (String) rootAlias.get(0).getFieldValue(OBJECT_ID), request, response);
@@ -228,20 +229,50 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                 try {
                     SolrDocumentList relatedDocuments = resolveSolrDocuments(searchStr);
-
+                    
+                    String nextAliasPathContextAfter = aliasPathContext;
+                    String relatedObjectId = null;
+                    
+                    LOGGER.debug("Process Alias Path Context: Try to shrink Alias Path Context " + aliasPathContext);
+                    
                     for (SolrDocument relatedDocument : relatedDocuments) {
 
-                        String currentAlias = (String) relatedDocument.getFieldValue(ALIAS);
+                        String currentAliasOrig = (String) relatedDocument.getFieldValue(ALIAS);
 
-                        if (currentAlias != null && aliasPathContext.startsWith(currentAlias)) {
-
-                            aliasPathContext = aliasPathContext
-                                    .replaceFirst((String) relatedDocument.getFieldValue(ALIAS), "");
-
-                            return getContentFromAliasPath(aliasPathContext, fullPath,
-                                    (String) relatedDocument.getFieldValue(OBJECT_ID), request, response);
+                        if (currentAliasOrig != null) {
+                            String currentAlias = currentAliasOrig.toLowerCase();
+                            String possibleAliasPathContextAfter = aliasPathContext.replaceFirst(currentAlias, "");
+                            
+                            if (nextAliasPathContextAfter.length() > possibleAliasPathContextAfter.length()) {
+                                nextAliasPathContextAfter = possibleAliasPathContextAfter;       
+                                relatedObjectId = (String) relatedDocument.getFieldValue(OBJECT_ID);
+                                
+                                LOGGER.debug("---- Process Alias Path Context: " + currentAlias + " found in " + aliasPathContext + ". Shrink aliasPathContext into " + nextAliasPathContextAfter);
+                            }
                         }
                     }
+                    
+                    if (relatedObjectId != null) {
+
+                        LOGGER.debug("Process Alias Path Context: Alias Path Context " + aliasPathContext
+                            + " found in Document " + relatedObjectId);
+                        
+                        aliasPathContext = nextAliasPathContextAfter;
+
+                        LOGGER.debug("Process Alias Path Context:  New Alias Path Context is [" + aliasPathContext + "]");
+
+                        return getContentFromAliasPath(aliasPathContext, fullPath, relatedObjectId, request, response);
+                    }
+                    
+                    
+                    if (relatedDocuments.getNumFound() == 0) {
+                        LOGGER.debug("Process Alias Path Context: No Documents found with searchStr: [" + searchStr + "]");
+                    } else {
+                        LOGGER.debug("Process Alias Path Context: Solr query [" + searchStr + "] has got "
+                            + relatedDocuments.getNumFound()
+                            + " documents, but these documents does not include aliasPathContext " + aliasPathContext);
+                    }
+
                 } catch (SolrServerException | IOException e) {
                     LOGGER.error("Error in communication with solr server: " + e.getMessage());
                 }

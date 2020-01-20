@@ -15,6 +15,9 @@
 
       <script src="{$WebApplicationBaseURL}js/mir-alias-module/jquery-observe.js" type="text/javascript"></script>
       <script src="{$WebApplicationBaseURL}js/mir-alias-module/alias-modal.js" type="text/javascript"></script>
+      <script type="text/javascript">
+      	var mcrPrefixConf = '<xed:output value="$MCR.Alias.prefix" />';
+      </script>
     </fieldset>
   </xed:template>
 
