@@ -5,11 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.xml.transform.TransformerException;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,8 +19,9 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.mycore.access.MCRAccessManager;
+import static org.mycore.access.MCRAccessManager.PERMISSION_READ;
 import org.mycore.common.MCRSessionMgr;
-import org.mycore.common.config.MCRConfiguration;
+import org.mycore.common.config.MCRConfiguration2;
 import org.mycore.common.content.MCRContent;
 import org.mycore.common.content.MCRPathContent;
 import org.mycore.datamodel.common.MCRXMLMetadataManager;
@@ -55,7 +55,6 @@ public class MCRAliasContentServlet extends MCRContentServlet {
     private static final String OBJECT_ID = "id";
     private static final String ALIAS = "alias";
 
-    public static final String FILE_PATTERN_LAYOUTSERVICE = "MCR.Alias.Filepattern";
 
     /**
      * 
@@ -64,9 +63,15 @@ public class MCRAliasContentServlet extends MCRContentServlet {
     private SolrClient solrClient = MCRSolrClientFactory.getMainSolrClient();
 
     private MCRXMLMetadataManager metadataManager = MCRXMLMetadataManager.instance();
+    private String aliasFilePattern;
+    
 
-    MCRConfiguration configuration = MCRConfiguration.instance();
-
+    @Override
+    public void init() throws ServletException {
+        super.init();
+        this.aliasFilePattern = MCRConfiguration2.getString("MCR.Alias.Filepattern").get();
+    }
+    
     @Override
     public MCRContent getContent(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
@@ -181,16 +186,14 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                         /*
                          * permission check on derivate
                          */
-                        if (!MCRAccessManager.checkPermissionForReadingDerivate(mcrDerivateID.toString())) {
+                        if (!MCRAccessManager.checkDerivateContentPermission(mcrDerivateID, PERMISSION_READ)) {
                             LOGGER.info("AccessForbidden to {}", request.getPathInfo());
                             response.sendError(HttpServletResponse.SC_FORBIDDEN);
                             return null;
                         }
 
                         MCRContent mcrContent = new MCRPathContent(mcrPath);
-
-                        final String aliasFilePattern = configuration.getString(FILE_PATTERN_LAYOUTSERVICE, "");
-
+		
                         /*
                          * Should the file be transformed via getLayoutService() ?
                          */
