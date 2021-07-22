@@ -251,12 +251,6 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                             String possibleAliasPathContextAfter = aliasPathContext.replaceFirst(currentAlias, "");
 
                             boolean possibleAliasBigger = nextAliasPathContextAfter.length() > possibleAliasPathContextAfter.length();
-                            LOGGER.debug("nextAliasPathContextAfter.length()={} possibleAliasPathContextAfter.length" +
-                                "()={} aliasPathContext.indexOf(currentAlias)={} nextAliasPos={}",
-                                nextAliasPathContextAfter.length(),
-                                possibleAliasPathContextAfter.length(),
-                                aliasPathContext.indexOf(currentAlias),
-                                nextAliasPos);
                             if (possibleAliasBigger || (nextAliasPathContextAfter.length() == possibleAliasPathContextAfter.length() && aliasPathContext.indexOf(currentAlias) < nextAliasPos)){
                                 nextAliasPathContextAfter = possibleAliasPathContextAfter;
                                 relatedObjectId = (String) relatedDocument.getFieldValue(OBJECT_ID);
