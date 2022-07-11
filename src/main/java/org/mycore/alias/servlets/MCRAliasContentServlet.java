@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -244,10 +245,13 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                     
                     LOGGER.debug("Process Alias Path Context: Try to shrink Alias Path Context " + aliasPathContext);
                     List<String> pathParts = Stream.of(aliasPathContext.split("/"))
-                        .filter(Predicate.not(String::isEmpty)).collect(Collectors.toList());
+                        .filter(Predicate.not(String::isEmpty))
+                        .map(String::toLowerCase)
+                        .collect(Collectors.toList());
                     for (SolrDocument relatedDocument : relatedDocuments) {
                         String alias = (String) relatedDocument.getFieldValue(ALIAS);
                         if (alias != null && pathParts.size() >= 1) {
+                            alias = alias.toLowerCase(Locale.ROOT);
                             String first = pathParts.stream().findFirst().get();
                             LOGGER.info("Compare {} with {} = {}", alias, first, alias.equals(first));
                             if (alias.equals(first)) {
