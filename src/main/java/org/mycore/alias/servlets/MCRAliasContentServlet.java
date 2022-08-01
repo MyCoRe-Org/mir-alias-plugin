@@ -5,8 +5,13 @@ import static org.mycore.access.MCRAccessManager.PERMISSION_READ;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -112,7 +117,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                 LOGGER.info("Alias was found with Object id: " + rootAlias.get(0).getFieldValue(OBJECT_ID));
 
                 String aliasPathContextOrig = parsePath(path).replaceFirst(decreasedPath, "");
-                String aliasPathContext = aliasPathContextOrig.toLowerCase();
+                String aliasPathContext = aliasPathContextOrig.toLowerCase(Locale.ROOT);
 
                 contentFromAliasPath = getContentFromAliasPath(aliasPathContext, path,
                         (String) rootAlias.get(0).getFieldValue(OBJECT_ID), request, response);
@@ -235,28 +240,30 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                 try {
                     SolrDocumentList relatedDocuments = resolveSolrDocuments(searchStr);
-                    
                     String nextAliasPathContextAfter = aliasPathContext;
-                    int nextAliasPos = Integer.MAX_VALUE;
                     String relatedObjectId = null;
                     
                     LOGGER.debug("Process Alias Path Context: Try to shrink Alias Path Context " + aliasPathContext);
-                    
+                    List<String> pathParts = Stream.of(aliasPathContext.split("/"))
+                        .filter(Predicate.not(String::isEmpty))
+                        .map(p -> p.toLowerCase(Locale.ROOT))
+                        .collect(Collectors.toList());
                     for (SolrDocument relatedDocument : relatedDocuments) {
-
-                        String currentAliasOrig = (String) relatedDocument.getFieldValue(ALIAS);
-
-                        if (currentAliasOrig != null) {
-                            String currentAlias = currentAliasOrig.toLowerCase();
-                            String possibleAliasPathContextAfter = aliasPathContext.replaceFirst(currentAlias, "");
-
-                            boolean possibleAliasBigger = nextAliasPathContextAfter.length() > possibleAliasPathContextAfter.length();
-                            if (possibleAliasBigger || (nextAliasPathContextAfter.length() == possibleAliasPathContextAfter.length() && aliasPathContext.indexOf(currentAlias) < nextAliasPos)){
-                                nextAliasPathContextAfter = possibleAliasPathContextAfter;
+                        String alias = (String) relatedDocument.getFieldValue(ALIAS);
+                        if (alias != null && pathParts.size() >= 1) {
+                            alias = alias.toLowerCase(Locale.ROOT);
+                            String first = pathParts.stream().findFirst().get();
+                            LOGGER.info("Compare {} with {} = {}", alias, first, alias.equals(first));
+                            if (alias.equals(first)) {
                                 relatedObjectId = (String) relatedDocument.getFieldValue(OBJECT_ID);
-                                nextAliasPos = aliasPathContext.indexOf(currentAlias);
-                                
-                                LOGGER.debug("---- Process Alias Path Context: " + currentAlias + " found in " + aliasPathContext + ". Shrink aliasPathContext into " + nextAliasPathContextAfter);
+                                nextAliasPathContextAfter = pathParts.stream().skip(1).collect(Collectors.joining("/"));
+                                if (nextAliasPathContextAfter.length()>0 && !nextAliasPathContextAfter.startsWith("/")){
+                                    nextAliasPathContextAfter = String.format(Locale.ROOT, "/%s",
+                                        nextAliasPathContextAfter);
+                                }
+                                LOGGER.info("---- Process Alias Path Context: " + alias + " found in "
+                                    + aliasPathContext + ". Shrink aliasPathContext into " + nextAliasPathContextAfter);
+                                break;
                             }
                         }
                     }
@@ -268,7 +275,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                         
                         aliasPathContext = nextAliasPathContextAfter;
 
-                        LOGGER.debug("Process Alias Path Context:  New Alias Path Context is [" + aliasPathContext + "]");
+                        LOGGER.info("Process Alias Path Context:  New Alias Path Context is [" + aliasPathContext + "]");
 
                         return getContentFromAliasPath(aliasPathContext, fullPath, relatedObjectId, request, response);
                     }
