@@ -240,30 +240,28 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                 try {
                     SolrDocumentList relatedDocuments = resolveSolrDocuments(searchStr);
+                    
                     String nextAliasPathContextAfter = aliasPathContext;
+                    int nextAliasPos = Integer.MAX_VALUE;
                     String relatedObjectId = null;
                     
                     LOGGER.debug("Process Alias Path Context: Try to shrink Alias Path Context " + aliasPathContext);
-                    List<String> pathParts = Stream.of(aliasPathContext.split("/"))
-                        .filter(Predicate.not(String::isEmpty))
-                        .map(p -> p.toLowerCase(Locale.ROOT))
-                        .collect(Collectors.toList());
+                    
                     for (SolrDocument relatedDocument : relatedDocuments) {
-                        String alias = (String) relatedDocument.getFieldValue(ALIAS);
-                        if (alias != null && pathParts.size() >= 1) {
-                            alias = alias.toLowerCase(Locale.ROOT);
-                            String first = pathParts.stream().findFirst().get();
-                            LOGGER.info("Compare {} with {} = {}", alias, first, alias.equals(first));
-                            if (alias.equals(first)) {
+
+                        String currentAliasOrig = (String) relatedDocument.getFieldValue(ALIAS);
+
+                        if (currentAliasOrig != null) {
+                            String currentAlias = currentAliasOrig.toLowerCase();
+                            String possibleAliasPathContextAfter = aliasPathContext.replaceFirst(currentAlias, "");
+
+                            boolean possibleAliasBigger = nextAliasPathContextAfter.length() > possibleAliasPathContextAfter.length();
+                            if (possibleAliasBigger || (nextAliasPathContextAfter.length() == possibleAliasPathContextAfter.length() && aliasPathContext.indexOf(currentAlias) < nextAliasPos)){
+                                nextAliasPathContextAfter = possibleAliasPathContextAfter;
                                 relatedObjectId = (String) relatedDocument.getFieldValue(OBJECT_ID);
-                                nextAliasPathContextAfter = pathParts.stream().skip(1).collect(Collectors.joining("/"));
-                                if (nextAliasPathContextAfter.length()>0 && !nextAliasPathContextAfter.startsWith("/")){
-                                    nextAliasPathContextAfter = String.format(Locale.ROOT, "/%s",
-                                        nextAliasPathContextAfter);
-                                }
-                                LOGGER.info("---- Process Alias Path Context: " + alias + " found in "
-                                    + aliasPathContext + ". Shrink aliasPathContext into " + nextAliasPathContextAfter);
-                                break;
+                                nextAliasPos = aliasPathContext.indexOf(currentAlias);
+                                
+                                LOGGER.debug("---- Process Alias Path Context: " + currentAlias + " found in " + aliasPathContext + ". Shrink aliasPathContext into " + nextAliasPathContextAfter);
                             }
                         }
                     }
