@@ -14,17 +14,6 @@
   <description>Alias Naming plugin for MyCoRe/MODS Institutional Repository</description>
   <url>http://maven.apache.org</url>
 
-  <properties>
-    <mockito.version>1.10.19</mockito.version>
-
-    <!-- dependendy versioning -->
-    <powermock.version>1.6.2</powermock.version>
-
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-    <servletapi.version>3.1.0</servletapi.version>
-  </properties>
-
   <build>
     <plugins>
       <plugin>
@@ -75,7 +64,6 @@
       <url>scp://server.mycore.de/mcr/mycore.de/generated/mir${site.suffix}</url>
     </site>
   </distributionManagement>
-
   <dependencies>
 
     <dependency>

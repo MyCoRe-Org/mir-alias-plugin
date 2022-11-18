@@ -5,9 +5,10 @@ import static org.mycore.access.MCRAccessManager.PERMISSION_READ;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -72,7 +73,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
     private MCRXMLMetadataManager metadataManager = MCRXMLMetadataManager.instance();
     private String aliasFilePattern;
-    
+
 
     @Override
     public void init() throws ServletException {
@@ -146,6 +147,22 @@ public class MCRAliasContentServlet extends MCRContentServlet {
         return contentFromAliasPath;
     }
 
+    private static String getAliasFromDocument(SolrDocument d) {
+        return (String) d.getFieldValue(ALIAS);
+    }
+
+    private static void logPossibleAliasDocument(SolrDocument doc) {
+        LOGGER.debug("Possible alias found {}", getAliasFromDocument(doc).toLowerCase(Locale.ROOT));
+    }
+
+    private static boolean isDocumentAliasMatching(String cleanAliasPathContext, SolrDocument doc) {
+        return cleanAliasPathContext.startsWith(getAliasFromDocument(doc).toLowerCase(Locale.ROOT));
+    }
+
+    private static boolean documentHasAlias(SolrDocument doc) {
+        return doc.getFieldValue(ALIAS) != null && doc.getFieldValue(ALIAS) instanceof String;
+    }
+
     private MCRContent getContentFromAliasPath(String aliasPathContext, String fullPath, String objectId,
             HttpServletRequest request, HttpServletResponse response) throws IOException {
 
@@ -201,7 +218,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                         }
 
                         MCRContent mcrContent = new MCRPathContent(mcrPath);
-		
+
                         /*
                          * Should the file be transformed via getLayoutService() ?
                          */
@@ -231,7 +248,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                 /*
                  * look for related items
-                 * 
+                 *
                  */
                 LOGGER.info("Check if alias path context " + aliasPathContext
                         + " exists for document/derivate relations on " + objectId);
@@ -242,30 +259,34 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                     SolrDocumentList relatedDocuments = resolveSolrDocuments(searchStr);
                     String nextAliasPathContextAfter = aliasPathContext;
                     String relatedObjectId = null;
-                    
+
                     LOGGER.debug("Process Alias Path Context: Try to shrink Alias Path Context " + aliasPathContext);
                     List<String> pathParts = Stream.of(aliasPathContext.split("/"))
                         .filter(Predicate.not(String::isEmpty))
                         .map(p -> p.toLowerCase(Locale.ROOT))
                         .collect(Collectors.toList());
-                    for (SolrDocument relatedDocument : relatedDocuments) {
-                        String alias = (String) relatedDocument.getFieldValue(ALIAS);
-                        if (alias != null && pathParts.size() >= 1) {
-                            alias = alias.toLowerCase(Locale.ROOT);
-                            String first = pathParts.stream().findFirst().get();
-                            LOGGER.info("Compare {} with {} = {}", alias, first, alias.equals(first));
-                            if (alias.equals(first)) {
-                                relatedObjectId = (String) relatedDocument.getFieldValue(OBJECT_ID);
-                                nextAliasPathContextAfter = pathParts.stream().skip(1).collect(Collectors.joining("/"));
-                                if (nextAliasPathContextAfter.length()>0 && !nextAliasPathContextAfter.startsWith("/")){
-                                    nextAliasPathContextAfter = String.format(Locale.ROOT, "/%s",
-                                        nextAliasPathContextAfter);
-                                }
-                                LOGGER.info("---- Process Alias Path Context: " + alias + " found in "
-                                    + aliasPathContext + ". Shrink aliasPathContext into " + nextAliasPathContextAfter);
-                                break;
-                            }
-                        }
+
+                    String cleanAliasPathContext = String.join("/", pathParts);
+
+                    // the longer the alias of the document is, the more likely it is the correct one
+                    Comparator<SolrDocument> compareBestMatchingAlias = Comparator
+                        .comparing((doc) -> getAliasFromDocument(doc).length(), Integer::compareTo);
+
+                    Optional<SolrDocument> bestMatchingOptionalDocument = relatedDocuments.stream()
+                        .filter(MCRAliasContentServlet::documentHasAlias)
+                        .filter(doc -> isDocumentAliasMatching(cleanAliasPathContext, doc))
+                        .peek(MCRAliasContentServlet::logPossibleAliasDocument)
+                        .max(compareBestMatchingAlias);
+
+                    if (bestMatchingOptionalDocument.isPresent()) {
+                        SolrDocument relatedDocument = bestMatchingOptionalDocument.get();
+
+                        relatedObjectId = (String) relatedDocument.getFieldValue(OBJECT_ID);
+                        String alias = getAliasFromDocument(relatedDocument).toLowerCase(Locale.ROOT);
+
+                        nextAliasPathContextAfter = cleanAliasPathContext.substring(alias.length());
+                        LOGGER.info("---- Process Alias Path Context: " + alias + " found in "
+                            + aliasPathContext + ". Shrink aliasPathContext into " + nextAliasPathContextAfter);
                     }
                     
                     if (relatedObjectId != null) {
@@ -319,7 +340,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
             }
 
             /*
-             * user have not the permission  
+             * user have not the permission
              */
             LOGGER.info("Current user have not the permission to resolve the document via alias " + fullPath);
         }
