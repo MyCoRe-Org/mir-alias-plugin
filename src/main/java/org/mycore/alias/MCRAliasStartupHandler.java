@@ -1,14 +1,14 @@
 package org.mycore.alias;
 
 import java.util.StringTokenizer;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletRegistration;
+import org.mycore.common.events.MCRStartupHandler.AutoExecutable;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletRegistration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.mycore.alias.servlets.MCRAliasContentServlet;
 import org.mycore.common.config.MCRConfiguration2;
-import org.mycore.common.events.MCRStartupHandler.AutoExecutable;
 
 public class MCRAliasStartupHandler implements AutoExecutable {
 
