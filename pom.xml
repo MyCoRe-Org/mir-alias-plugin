@@ -5,7 +5,7 @@
   <parent>
     <groupId>org.mycore.mir</groupId>
     <artifactId>mir-parent</artifactId>
-    <version>2022.06.3-SNAPSHOT</version>
+    <version>2023.06.3-SNAPSHOT</version>
   </parent>
   <artifactId>mir-alias-plugin</artifactId>
   <packaging>jar</packaging>
