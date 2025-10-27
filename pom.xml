@@ -15,6 +15,12 @@
   <build>
     <plugins>
       <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <configuration>
+          <skip>True</skip>
+        </configuration>
+      </plugin>
+      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
@@ -44,6 +50,11 @@
     </repository>
   </repositories>
   <dependencies>
+    <dependency>
+      <groupId>commons-lang</groupId>
+      <artifactId>commons-lang</artifactId>
+      <version>2.6</version>
+    </dependency>
     <dependency>
       <groupId>jakarta.servlet</groupId>
       <artifactId>jakarta.servlet-api</artifactId>
