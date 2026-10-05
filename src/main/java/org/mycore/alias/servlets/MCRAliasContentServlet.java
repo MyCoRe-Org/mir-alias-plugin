@@ -152,7 +152,8 @@ public class MCRAliasContentServlet extends MCRContentServlet {
     }
 
     private static boolean isDocumentAliasMatching(String cleanAliasPathContext, SolrDocument doc) {
-        return cleanAliasPathContext.startsWith(getAliasFromDocument(doc).toLowerCase(Locale.ROOT));
+        String alias = getAliasFromDocument(doc).toLowerCase(Locale.ROOT);
+        return cleanAliasPathContext.equals(alias) || cleanAliasPathContext.startsWith(alias + "/");
     }
 
     private static boolean documentHasAlias(SolrDocument doc) {
