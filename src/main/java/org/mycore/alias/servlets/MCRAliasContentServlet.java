@@ -114,7 +114,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                 LOGGER.info("Alias was found with Object id: " + rootAlias.get(0).getFieldValue(OBJECT_ID));
 
-                String aliasPathContext = parsePath(path).replaceFirst(decreasedPath, "");
+                String aliasPathContext = parsePath(path).substring(decreasedPath.length());
 
                 contentFromAliasPath = getContentFromAliasPath(aliasPathContext, path,
                         (String) rootAlias.get(0).getFieldValue(OBJECT_ID), request, response);
