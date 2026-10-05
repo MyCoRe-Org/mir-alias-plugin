@@ -114,8 +114,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
                 LOGGER.info("Alias was found with Object id: " + rootAlias.get(0).getFieldValue(OBJECT_ID));
 
-                String aliasPathContextOrig = parsePath(path).replaceFirst(decreasedPath, "");
-                String aliasPathContext = aliasPathContextOrig.toLowerCase(Locale.ROOT);
+                String aliasPathContext = parsePath(path).replaceFirst(decreasedPath, "");
 
                 contentFromAliasPath = getContentFromAliasPath(aliasPathContext, path,
                         (String) rootAlias.get(0).getFieldValue(OBJECT_ID), request, response);
@@ -260,10 +259,10 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                     LOGGER.debug("Process Alias Path Context: Try to shrink Alias Path Context " + aliasPathContext);
                     List<String> pathParts = Stream.of(aliasPathContext.split("/"))
                         .filter(Predicate.not(String::isEmpty))
-                        .map(p -> p.toLowerCase(Locale.ROOT))
                         .collect(Collectors.toList());
 
-                    String cleanAliasPathContext = String.join("/", pathParts);
+                    String cleanAliasPathContextOrig = String.join("/", pathParts);
+                    String cleanAliasPathContext = cleanAliasPathContextOrig.toLowerCase(Locale.ROOT);
 
                     // the longer the alias of the document is, the more likely it is the correct one
                     Comparator<SolrDocument> compareBestMatchingAlias = Comparator
@@ -281,7 +280,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                         relatedObjectId = (String) relatedDocument.getFieldValue(OBJECT_ID);
                         String alias = getAliasFromDocument(relatedDocument).toLowerCase(Locale.ROOT);
 
-                        nextAliasPathContextAfter = cleanAliasPathContext.substring(alias.length());
+                        nextAliasPathContextAfter = cleanAliasPathContextOrig.substring(alias.length());
                         LOGGER.info("---- Process Alias Path Context: " + alias + " found in "
                             + aliasPathContext + ". Shrink aliasPathContext into " + nextAliasPathContextAfter);
                     }
