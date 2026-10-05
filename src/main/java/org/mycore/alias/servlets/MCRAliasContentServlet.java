@@ -20,6 +20,7 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.mycore.access.MCRAccessManager;
@@ -33,7 +34,6 @@ import org.mycore.datamodel.metadata.MCRObjectID;
 import org.mycore.datamodel.niofs.MCRPath;
 import org.mycore.frontend.servlets.MCRContentServlet;
 import org.mycore.solr.MCRSolrClientFactory;
-import org.mycore.solr.MCRSolrUtils;
 import org.xml.sax.SAXException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -359,7 +359,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
         try {
 
             String searchStr = ALIAS + ":%filter%".replace("%filter%",
-                    aliasPart != null && !aliasPart.isEmpty() ? MCRSolrUtils.escapeSearchValue(aliasPart) : "*");
+                    aliasPart != null && !aliasPart.isEmpty() ? ClientUtils.escapeQueryChars(aliasPart) : "*");
 
             results = resolveSolrDocuments(searchStr);
 
