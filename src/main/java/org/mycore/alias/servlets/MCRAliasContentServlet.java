@@ -75,7 +75,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
     @Override
     public void init() throws ServletException {
         super.init();
-        this.aliasFilePattern = MCRConfiguration2.getString("MCR.Alias.Filepattern").get();
+        this.aliasFilePattern = MCRConfiguration2.getString("MCR.Alias.Filepattern").orElse("");
     }
     
     @Override
