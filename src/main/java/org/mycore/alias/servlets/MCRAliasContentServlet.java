@@ -32,7 +32,7 @@ import org.mycore.datamodel.metadata.MCRMetadataManager;
 import org.mycore.datamodel.metadata.MCRObjectID;
 import org.mycore.datamodel.niofs.MCRPath;
 import org.mycore.frontend.servlets.MCRContentServlet;
-import org.mycore.solr.MCRSolrClientFactory;
+import org.mycore.solr.MCRSolrCoreManager;
 import org.mycore.solr.MCRSolrUtils;
 import org.xml.sax.SAXException;
 import jakarta.servlet.ServletException;
@@ -66,7 +66,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
      * 
      * Client which communicates with MyCoRe Solr Server
      */
-    private SolrClient solrClient = MCRSolrClientFactory.getMainSolrClient();
+    private SolrClient solrClient = MCRSolrCoreManager.getMainSolrClient();
 
     private MCRXMLMetadataManager metadataManager = MCRXMLMetadataManager.instance();
     private String aliasFilePattern;
