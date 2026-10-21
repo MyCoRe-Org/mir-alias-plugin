@@ -1,48 +1,103 @@
-# mir-alias-module
-Every MIR document is addressed to a mods identifier, e.g. http://www.mycore.de/mir/receive/mir_mods_00000003.
-This plugin extends this url with an alias mechanismus. The mir-admin document form is expanded with alias fields.
+# mir-alias-plugin
 
-With a given alias mechanismus the previous URL is also reachable via created alias-URL, for example "http://.../mir/go/oa/publicationsfonds"
+This MIR plugin provides human-readable alias URLs for MIR documents.
+
+Every MIR document is addressed by its MyCoRe object ID, e.g. `https://example.org/receive/mir_mods_00000003`.
+With this plugin, a document can additionally be reached via an alias, e.g. `https://example.org/go/oa/publicationsfonds`.
+
+The alias is maintained in the admin editor form and stored as a service flag of the object. It is indexed in Solr
+and resolved by a dedicated servlet.
+
+---
 
 ## Features
-### Alias basic resolvement
-Alias allocation is affiliated to mir editor-admins.xed.
-After save the document alias is available via: 
 
-**{webApplicationBaseURL}/{aliasConfParameter}/{alias-part}**.
+The plugin offers the following features:
 
-For the shown case alias is available through **http://localhost:8291/go/sozial.geschichte-online**
+- Alias Resolution: Documents are reachable via `/go/{alias}`.
+- Configurable Prefixes: One or more URL prefixes can be configured (default: `go`).
+- Hierarchical Aliases: Aliases are combined along `mods:relatedItem` relations, e.g. `/go/{parent-alias}/{child-alias}`.
+- File Access: Files of a document's derivates can be addressed via `/go/{alias}/{filename}`.
+- Layout Transformation: Files matching a configurable pattern (by default `*.xml`) are rendered via the MyCoRe layout service.
+- Editor Integration: An alias field is added to the MIR admin editor form, including a preview of the generated URLs.
+- Access Control: Read permissions on objects and derivates are checked before content is delivered.
 
+---
 
-### Related Items with Alias Structure
-The Alias plugin recognizes alias structure in related items.You can allocate this 
-way an expanded alias structure. The URL will be generated automatically based on the information
-from your alias structure.
+## How it works
 
-### Multiple Aliases
-The alias structure is based on a tree. It is possible to assign multiple alises.
+### Basic alias resolution
 
+The alias is entered in the admin editor form (`editor-admins.xed`) and stored as
+`service/servflags/servflag[@type='alias']`. After saving, the document with alias `sozial.geschichte-online`
+is available via:
 
+```text
+https://example.org/go/sozial.geschichte-online
+```
 
-## Installation instructions for mir lts 2019.06 (As mir-enduser)
+Alias lookup is case-insensitive.
 
-1. Download the project from this repository and place it on your computer
+### Hierarchical aliases with related items
 
-2. Unzip the downloaded file to create a development project folder location 
+The plugin recognizes alias structures in related items. If a document with alias `child` is related
+(`mods:relatedItem`) to a document with alias `parent`, it can be reached via:
 
-3. Customize general mycore.properties(http://www.mycore.de/documentation/getting_started/mcr_properties.html) for this plugin (/mir-alias-plugin/src/main/resources/config/mir-alias-plugin/mycore.properties)
+```text
+https://example.org/go/parent/child
+```
 
-4. Create jar file with maven => mvn clean && mvn install
+The resolver starts with the longest matching alias of the requested path and walks down the related items until the
+remaining path is fully resolved. The editor shows all URLs generated this way.
 
-5. Copy the created jar file from target (/mir-alias-plugin/target) to mycore home lib 
+### Files in derivates
 
-(Windows Systems C:\Users\User\AppData\Local\MyCoRe\mirapplication\lib) <br />
-(Linux Systems /home/user/.mycore/mirapplication/lib)
+If the last path segment is not an alias, it is treated as a filename and looked up in the derivates of the resolved
+document, e.g.:
 
-6. The alias plugin uses an alias field within the index. For this purpose, the plugin brings its own schema extensions. It is necessary to reload the solr schema (for further information have a look on solr mycore documentation http://www.mycore.de/documentation/search/using_solr.html). In case of a standard solr core installation (the main core is named „main“) open the mir web cli:
--	run command „reload solr configuration main in core main“
-	* This command synchronizes the solr main core with the solr schema from this plugin
--	Reload the mir core with solr webadmin (Core Admin - reload)
-	* You can do a quick check in the solr webadmin via mir schema menu item (alias field should be there now)
--	Reindex solr with the rules from the navigation plugin with command „rebuild solr metadata and content index in core main“
-	* solr entries should support the alias field now
+```text
+https://example.org/go/parent/child/index.xml
+```
+
+Files matching `MCR.Alias.Filepattern` are transformed via the layout service (the parameters `XSL.MCRObjectID` and
+`XSL.MCRDerivateID` are set). All other files are delivered as is.
+
+---
+
+## Installation & Configuration
+
+### Build and provide plugin
+
+Build the JAR file with `mvn clean install` and copy it to `~/.mycore/(dev-)mir/lib/`.
+
+### Configure `mycore.properties`
+
+The plugin ships its default configuration, which registers the servlet, the editor extension and the Solr indexing.
+Optionally, the following properties can be adjusted in `~/.mycore/(dev-)mir/mycore.properties`:
+
+```text
+# Comma-separated list of URL prefixes the alias servlet is mapped to (default: go).
+# Possible patterns: {prefix}, /{prefix}, {prefix}/, /{prefix}/
+MCR.Alias.prefix=publikationen/,quellen/
+
+# Regular expression for files which are transformed via the layout service.
+MCR.Alias.Filepattern=^(.+?)(\\.xml)
+```
+
+> ⚠️ Note: Changes to `MCR.Alias.prefix` require a restart of the application, because the servlet mappings are
+> registered on startup.
+
+### Update Solr schema and reindex
+
+The plugin uses an `alias` field in the Solr `main` core and brings its own schema extension.
+Therefore, the Solr configuration must be reloaded and the index rebuilt. For further information, see the
+[MyCoRe Solr documentation](https://www.mycore.de/documentation/search/search_solr_use/).
+
+Run the following commands in the MIR CLI (assuming the main core is named `main`):
+
+```text
+reload solr configuration main in core main
+rebuild solr metadata and content index in core main
+```
+
+> 💡 Tip: You can check in the Solr admin UI (schema view of the core) whether the `alias` field is present.
