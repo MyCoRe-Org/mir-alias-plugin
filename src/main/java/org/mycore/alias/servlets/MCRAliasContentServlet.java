@@ -319,7 +319,11 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                 LOGGER.info("Check if alias path context " + aliasPathContext
                         + " exists for document/derivate relations on " + objectId);
 
-                String searchStr = "mods.relatedItem:" + objectId;
+                // only related items of type host or series build the alias hierarchy
+                String escapedObjectId = MCRSolrUtils.escapeSearchValue(objectId);
+                String searchStr = PARENT_RELATED_ITEM_FIELDS.stream()
+                    .map(field -> field + ":" + escapedObjectId)
+                    .collect(Collectors.joining(" OR "));
 
                 try {
                     SolrDocumentList relatedDocuments = resolveSolrDocuments(searchStr);
