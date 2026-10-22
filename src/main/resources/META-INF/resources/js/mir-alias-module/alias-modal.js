@@ -84,6 +84,9 @@ $(document).ready(function () {
 
     function appendDefaultUrl() {
 
+        // replace instead of append to stay idempotent across concurrent refreshes
+        $(".generatedAliasUrl").remove();
+
         aliasConfParameter.forEach((currentAliasParam) => {
             let defaultUrl = `
                 <div class="form-group row generatedAliasUrl">
@@ -101,8 +104,12 @@ $(document).ready(function () {
     }
 
     function appendGeneratedUrls(aliasPaths) {
+        // replace instead of append to stay idempotent across concurrent refreshes
+        $(".generatedAliasUrl").remove();
+        // remove identical paths (e.g. same parent resolved twice) to avoid duplicate url fields
+        let uniqueAliasPaths = [...new Set(aliasPaths)];
         aliasConfParameter.forEach((currentAliasParam) => {
-            $.each(aliasPaths, (index, path) => {
+            $.each(uniqueAliasPaths, (index, path) => {
 
                 index = index + 1;
 
@@ -151,7 +158,16 @@ $(document).ready(function () {
 
                 console.log('alias-modal.js: There have been added a new related item without an id to the frontend.')
             } else {
-                relatedItemIds.push(element.textContent);
+                // only related items of type host or series build the alias hierarchy
+                let relatedItemType = $(element).closest('.mir-related-item-search')
+                    .find("select[name*='/@type']").val();
+
+                if (relatedItemType === 'host' || relatedItemType === 'series') {
+                    relatedItemIds.push(element.textContent);
+                } else {
+                    console.log('alias-modal.js: Skip related item ' + element.textContent +
+                        ' because its type "' + relatedItemType + '" is not host or series.');
+                }
             }
         });
 
@@ -178,7 +194,11 @@ $(document).ready(function () {
             var relatedItems = [];
 
             $(data).find('mods\\:mods > mods\\:relatedItem').each(function () {
-                relatedItems.push($(this).attr('xlink:href'));
+                // only related items of type host or series build the alias hierarchy
+                var relatedItemType = $(this).attr('type');
+                if (relatedItemType === 'host' || relatedItemType === 'series') {
+                    relatedItems.push($(this).attr('xlink:href'));
+                }
             });
 
             if (!isEmpty(alias)) {
