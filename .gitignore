@@ -15,3 +15,10 @@ local.properties
 # Eclipse Core
 .project
 target/
+
+##IntelliJ https://github.com/github/gitignore/blob/master/Global/JetBrains.gitignore
+*.iml
+.idea/
+*.iws
+# IntelliJ
+/out/
