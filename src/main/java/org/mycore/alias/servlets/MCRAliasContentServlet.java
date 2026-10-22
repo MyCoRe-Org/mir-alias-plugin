@@ -4,10 +4,13 @@ import static org.mycore.access.MCRAccessManager.PERMISSION_READ;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -60,6 +63,9 @@ public class MCRAliasContentServlet extends MCRContentServlet {
     // Solr Fieldnames
     private static final String OBJECT_ID = "id";
     private static final String ALIAS = "alias";
+    private static final String RELATED_ITEM = "mods.relatedItem";
+    private static final List<String> PARENT_RELATED_ITEM_FIELDS = List.of(RELATED_ITEM + ".host",
+            RELATED_ITEM + ".series");
 
 
     /**
@@ -95,7 +101,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
         /*
          * Take the whole path and decrease it to get root alias!
          */
-        SolrDocumentList rootAlias = new SolrDocumentList();
+        List<SolrDocument> rootAlias;
         MCRContent contentFromAliasPath = null;
 
         String decreasedPath = parsePath(path);
@@ -108,7 +114,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
             /*
              * Try to resolve decreased path as an alias
              */
-            rootAlias = getMCRObjectsFromSolr(decreasedPath);
+            rootAlias = getRootAliasDocuments(decreasedPath);
 
             if (!rootAlias.isEmpty() && rootAlias.get(0) != null) {
 
@@ -142,6 +148,69 @@ public class MCRAliasContentServlet extends MCRContentServlet {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Requested Alias cannot be resolved on path: " + path);
         }
         return contentFromAliasPath;
+    }
+
+    /**
+     * Resolves the first part of an alias path. Only documents without a parent that has an alias
+     * are considered, because those are only reachable via the alias path of their parent.
+     * If no such root exists, a single unique match is used to keep short alias urls working.
+     *
+     * @param aliasPart alias part
+     * @return matching root documents, sorted by id
+     */
+    protected List<SolrDocument> getRootAliasDocuments(String aliasPart) {
+        SolrDocumentList hits = getMCRObjectsFromSolr(aliasPart);
+        if (hits.isEmpty()) {
+            return hits;
+        }
+        Set<String> parentIds = hits.stream()
+            .flatMap(MCRAliasContentServlet::getParentIds)
+            .collect(Collectors.toSet());
+        Set<String> parentsWithAlias;
+        try {
+            parentsWithAlias = getIdsWithAlias(parentIds);
+        } catch (SolrServerException | IOException e) {
+            LOGGER.error("Error in communication with solr server: " + e.getMessage());
+            parentsWithAlias = Set.of();
+        }
+        Set<String> finalParentsWithAlias = parentsWithAlias;
+        List<SolrDocument> roots = hits.stream()
+            .filter(doc -> getParentIds(doc).noneMatch(finalParentsWithAlias::contains))
+            .sorted(Comparator.comparing(doc -> (String) doc.getFieldValue(OBJECT_ID)))
+            .collect(Collectors.toList());
+        if (roots.isEmpty() && hits.size() == 1) {
+            LOGGER.info("Alias " + aliasPart + " is no root alias, but unique. Use "
+                + hits.get(0).getFieldValue(OBJECT_ID));
+            return hits;
+        }
+        if (roots.size() > 1) {
+            LOGGER.error("Alias " + aliasPart + " is ambiguous, found root objects "
+                + roots.stream().map(doc -> doc.getFieldValue(OBJECT_ID)).collect(Collectors.toList())
+                + ". Use " + roots.get(0).getFieldValue(OBJECT_ID));
+        }
+        return roots;
+    }
+
+    private static Stream<String> getParentIds(SolrDocument doc) {
+        return PARENT_RELATED_ITEM_FIELDS.stream()
+            .map(doc::getFieldValues)
+            .filter(Objects::nonNull)
+            .flatMap(Collection::stream)
+            .map(Objects::toString)
+            .filter(MCRObjectID::isValid);
+    }
+
+    private Set<String> getIdsWithAlias(Set<String> ids) throws SolrServerException, IOException {
+        if (ids.isEmpty()) {
+            return Set.of();
+        }
+        String idQuery = ids.stream().map(MCRSolrUtils::escapeSearchValue).collect(Collectors.joining(" OR "));
+        SolrQuery query = new SolrQuery(OBJECT_ID + ":(" + idQuery + ") AND " + ALIAS + ":*");
+        query.setFields(OBJECT_ID);
+        query.setRows(ids.size());
+        return solrClient.query(query).getResults().stream()
+            .map(doc -> (String) doc.getFieldValue(OBJECT_ID))
+            .collect(Collectors.toSet());
     }
 
     private static String getAliasFromDocument(SolrDocument d) {
@@ -250,7 +319,11 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                 LOGGER.info("Check if alias path context " + aliasPathContext
                         + " exists for document/derivate relations on " + objectId);
 
-                String searchStr = "mods.relatedItem:" + objectId;
+                // only related items of type host or series build the alias hierarchy
+                String escapedObjectId = MCRSolrUtils.escapeSearchValue(objectId);
+                String searchStr = PARENT_RELATED_ITEM_FIELDS.stream()
+                    .map(field -> field + ":" + escapedObjectId)
+                    .collect(Collectors.joining(" OR "));
 
                 try {
                     SolrDocumentList relatedDocuments = resolveSolrDocuments(searchStr);
