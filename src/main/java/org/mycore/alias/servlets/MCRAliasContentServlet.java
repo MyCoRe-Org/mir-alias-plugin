@@ -225,11 +225,23 @@ public class MCRAliasContentServlet extends MCRContentServlet {
         LOGGER.debug("Possible alias found {}", getAliasFromDocument(doc));
     }
 
-    private static boolean isDocumentAliasMatching(String cleanAliasPathContext, SolrDocument doc) {
-        String alias = getAliasFromDocument(doc);
-        return cleanAliasPathContext.regionMatches(true, 0, alias, 0, alias.length())
-            && (cleanAliasPathContext.length() == alias.length()
-                || cleanAliasPathContext.charAt(alias.length()) == '/');
+    private static boolean isDocumentAliasMatching(List<String> pathParts, SolrDocument doc) {
+        List<String> aliasParts = splitPath(getAliasFromDocument(doc));
+        if (aliasParts.isEmpty() || aliasParts.size() > pathParts.size()) {
+            return false;
+        }
+        for (int i = 0; i < aliasParts.size(); i++) {
+            if (!pathParts.get(i).equalsIgnoreCase(aliasParts.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static List<String> splitPath(String path) {
+        return Stream.of(path.split("/"))
+            .filter(Predicate.not(String::isEmpty))
+            .collect(Collectors.toList());
     }
 
     private static boolean documentHasAlias(SolrDocument doc) {
@@ -336,19 +348,15 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                     String relatedObjectId = null;
 
                     LOGGER.debug("Process Alias Path Context: Try to shrink Alias Path Context " + aliasPathContext);
-                    List<String> pathParts = Stream.of(aliasPathContext.split("/"))
-                        .filter(Predicate.not(String::isEmpty))
-                        .collect(Collectors.toList());
-
-                    String cleanAliasPathContext = String.join("/", pathParts);
+                    List<String> pathParts = splitPath(aliasPathContext);
 
                     // the longer the alias of the document is, the more likely it is the correct one
                     Comparator<SolrDocument> compareBestMatchingAlias = Comparator
-                        .comparing((doc) -> getAliasFromDocument(doc).length(), Integer::compareTo);
+                        .comparing((doc) -> splitPath(getAliasFromDocument(doc)).size(), Integer::compareTo);
 
                     Optional<SolrDocument> bestMatchingOptionalDocument = relatedDocuments.stream()
                         .filter(MCRAliasContentServlet::documentHasAlias)
-                        .filter(doc -> isDocumentAliasMatching(cleanAliasPathContext, doc))
+                        .filter(doc -> isDocumentAliasMatching(pathParts, doc))
                         .peek(MCRAliasContentServlet::logPossibleAliasDocument)
                         .max(compareBestMatchingAlias);
 
@@ -358,7 +366,9 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                         relatedObjectId = (String) relatedDocument.getFieldValue(OBJECT_ID);
                         String alias = getAliasFromDocument(relatedDocument);
 
-                        nextAliasPathContextAfter = cleanAliasPathContext.substring(alias.length());
+                        List<String> remainingParts = pathParts.subList(splitPath(alias).size(), pathParts.size());
+                        nextAliasPathContextAfter = remainingParts.isEmpty() ? ""
+                            : "/" + String.join("/", remainingParts);
                         LOGGER.info("---- Process Alias Path Context: " + alias + " found in "
                             + aliasPathContext + ". Shrink aliasPathContext into " + nextAliasPathContextAfter);
                     }
