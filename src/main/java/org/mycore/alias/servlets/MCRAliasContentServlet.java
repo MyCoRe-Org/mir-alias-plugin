@@ -398,25 +398,27 @@ public class MCRAliasContentServlet extends MCRContentServlet {
              */
             MCRObjectID mcrObjId = MCRObjectID.getInstance(objectId);
 
-            LOGGER.info("Check read permission on MyCoRe Object Id " + objectId + " with current user.");
-            if (MCRAccessManager.checkPermission(mcrObjId, MCRAccessManager.PERMISSION_READ)
-                    && (MCRMetadataManager.exists(mcrObjId))) {
-
-                MCRContent metadataContent = metadataManager.retrieveContent(mcrObjId);
-
-                LOGGER.info("Start to do layout transformation with retreived metadata content");
-
-                try {
-                    return getLayoutService().getTransformedContent(request, response, metadataContent);
-                } catch (TransformerException | SAXException e) {
-                    throw new IOException("could not transform metadata Content", e);
-                }
+            if (!MCRMetadataManager.exists(mcrObjId)) {
+                LOGGER.info("MyCoRe Object " + objectId + " for alias " + fullPath + " does not exist.");
+                return null;
             }
 
-            /*
-             * user have not the permission
-             */
-            LOGGER.info("Current user have not the permission to resolve the document via alias " + fullPath);
+            LOGGER.info("Check read permission on MyCoRe Object Id " + objectId + " with current user.");
+            if (!MCRAccessManager.checkPermission(mcrObjId, MCRAccessManager.PERMISSION_READ)) {
+                LOGGER.info("Current user have not the permission to resolve the document via alias " + fullPath);
+                response.sendError(HttpServletResponse.SC_FORBIDDEN);
+                return null;
+            }
+
+            MCRContent metadataContent = metadataManager.retrieveContent(mcrObjId);
+
+            LOGGER.info("Start to do layout transformation with retreived metadata content");
+
+            try {
+                return getLayoutService().getTransformedContent(request, response, metadataContent);
+            } catch (TransformerException | SAXException e) {
+                throw new IOException("could not transform metadata Content", e);
+            }
         }
 
         return null;
