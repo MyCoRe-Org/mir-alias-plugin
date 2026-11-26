@@ -432,8 +432,14 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
         try {
 
-            String searchStr = ALIAS + ":%filter%".replace("%filter%",
-                    aliasPart != null && !aliasPart.isEmpty() ? ClientUtils.escapeQueryChars(aliasPart) : "*");
+            String filter = "*";
+            if (aliasPart != null && !aliasPart.isEmpty()) {
+                if (aliasPart.isBlank()) {
+                    return results;
+                }
+                filter = ClientUtils.escapeQueryChars(aliasPart.trim());
+            }
+            String searchStr = ALIAS + ":" + filter;
 
             results = resolveSolrDocuments(searchStr);
 
