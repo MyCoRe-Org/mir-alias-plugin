@@ -88,6 +88,9 @@ public class MCRAliasContentServlet extends MCRContentServlet {
     public MCRContent getContent(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         String path = request.getPathInfo();
+        if (path != null) {
+            path = path.replaceAll("/{2,}", "/");
+        }
 
         if (path == null || path.equals("/")) {
 
