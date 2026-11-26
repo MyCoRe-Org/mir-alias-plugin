@@ -112,7 +112,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
         boolean isContentResolved = false;
 
-        while (!decreasedPath.isEmpty() && !isContentResolved && !response.isCommitted()) {
+        while (!decreasedPath.isEmpty() && !isContentResolved && !isErrorSent(response)) {
 
             /*
              * Try to resolve decreased path as an alias
@@ -145,7 +145,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
             }
         }
 
-        if (contentFromAliasPath == null && !response.isCommitted()) {
+        if (contentFromAliasPath == null && !isErrorSent(response)) {
             // Error redirect
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Requested Alias cannot be resolved on path: " + path);
         }
@@ -213,6 +213,10 @@ public class MCRAliasContentServlet extends MCRContentServlet {
         return solrClient.query(query).getResults().stream()
             .map(doc -> (String) doc.getFieldValue(OBJECT_ID))
             .collect(Collectors.toSet());
+    }
+
+    private static boolean isErrorSent(HttpServletResponse response) {
+        return response.isCommitted() || response.getStatus() >= HttpServletResponse.SC_BAD_REQUEST;
     }
 
     private static String getAliasFromDocument(SolrDocument d) {
