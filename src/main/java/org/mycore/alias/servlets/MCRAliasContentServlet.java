@@ -442,7 +442,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                 if (aliasPart.isBlank()) {
                     return results;
                 }
-                filter = ClientUtils.escapeQueryChars(aliasPart.trim());
+                filter = ClientUtils.escapeQueryChars(aliasPart);
             }
             String searchStr = ALIAS + ":" + filter;
 
