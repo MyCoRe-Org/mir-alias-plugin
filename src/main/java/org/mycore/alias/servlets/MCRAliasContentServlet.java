@@ -3,7 +3,6 @@ package org.mycore.alias.servlets;
 import static org.mycore.access.MCRAccessManager.PERMISSION_READ;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -273,9 +272,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                          * Is the specified filename existing in the derivate?
                          *  -> If no, continue iteration through derivate list
                          */
-                        try {
-                            Files.readAttributes(mcrPath, BasicFileAttributes.class);
-                        } catch (Exception exc) {
+                        if (!Files.isRegularFile(mcrPath)) {
 
                             LOGGER.info(
                                     mcrDerivateID.toString() + ":/ -> " + possibleFilename + " : file does not exist");
