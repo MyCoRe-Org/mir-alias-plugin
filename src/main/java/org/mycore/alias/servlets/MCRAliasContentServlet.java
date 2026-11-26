@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -269,8 +268,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                     /*
                      * get derivatives
                      */
-                    List<MCRObjectID> derivatesForDocument = MCRMetadataManager.getDerivateIds(mcrObjIdFromAliasPart, 0,
-                            TimeUnit.MILLISECONDS);
+                    List<MCRObjectID> derivatesForDocument = MCRMetadataManager.getDerivateIds(mcrObjIdFromAliasPart);
 
                     for (MCRObjectID mcrDerivateID : derivatesForDocument) {
 

@@ -4,10 +4,10 @@
   <parent>
     <groupId>org.mycore.mir</groupId>
     <artifactId>mir-parent</artifactId>
-    <version>2025.06.2</version>
+    <version>2025.12.2</version>
   </parent>
   <artifactId>mir-alias-plugin</artifactId>
-  <version>2025.06-SNAPSHOT</version>
+  <version>2025.12-SNAPSHOT</version>
   <packaging>jar</packaging>
   <name>mir-alias-plugin</name>
   <description>Alias Naming plugin for MyCoRe/MODS Institutional Repository</description>
