@@ -7,7 +7,6 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -218,12 +217,14 @@ public class MCRAliasContentServlet extends MCRContentServlet {
     }
 
     private static void logPossibleAliasDocument(SolrDocument doc) {
-        LOGGER.debug("Possible alias found {}", getAliasFromDocument(doc).toLowerCase(Locale.ROOT));
+        LOGGER.debug("Possible alias found {}", getAliasFromDocument(doc));
     }
 
     private static boolean isDocumentAliasMatching(String cleanAliasPathContext, SolrDocument doc) {
-        String alias = getAliasFromDocument(doc).toLowerCase(Locale.ROOT);
-        return cleanAliasPathContext.equals(alias) || cleanAliasPathContext.startsWith(alias + "/");
+        String alias = getAliasFromDocument(doc);
+        return cleanAliasPathContext.regionMatches(true, 0, alias, 0, alias.length())
+            && (cleanAliasPathContext.length() == alias.length()
+                || cleanAliasPathContext.charAt(alias.length()) == '/');
     }
 
     private static boolean documentHasAlias(SolrDocument doc) {
@@ -336,8 +337,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                         .filter(Predicate.not(String::isEmpty))
                         .collect(Collectors.toList());
 
-                    String cleanAliasPathContextOrig = String.join("/", pathParts);
-                    String cleanAliasPathContext = cleanAliasPathContextOrig.toLowerCase(Locale.ROOT);
+                    String cleanAliasPathContext = String.join("/", pathParts);
 
                     // the longer the alias of the document is, the more likely it is the correct one
                     Comparator<SolrDocument> compareBestMatchingAlias = Comparator
@@ -353,9 +353,9 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                         SolrDocument relatedDocument = bestMatchingOptionalDocument.get();
 
                         relatedObjectId = (String) relatedDocument.getFieldValue(OBJECT_ID);
-                        String alias = getAliasFromDocument(relatedDocument).toLowerCase(Locale.ROOT);
+                        String alias = getAliasFromDocument(relatedDocument);
 
-                        nextAliasPathContextAfter = cleanAliasPathContextOrig.substring(alias.length());
+                        nextAliasPathContextAfter = cleanAliasPathContext.substring(alias.length());
                         LOGGER.info("---- Process Alias Path Context: " + alias + " found in "
                             + aliasPathContext + ". Shrink aliasPathContext into " + nextAliasPathContextAfter);
                     }
