@@ -21,7 +21,6 @@ import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.mycore.access.MCRAccessManager;
@@ -438,16 +437,18 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
         try {
 
-            String filter = "*";
-            if (aliasPart != null && !aliasPart.isEmpty()) {
+            SolrQuery query;
+            if (aliasPart == null || aliasPart.isEmpty()) {
+                query = new SolrQuery(ALIAS + ":*");
+            } else {
                 if (aliasPart.isBlank()) {
                     return results;
                 }
-                filter = ClientUtils.escapeQueryChars(aliasPart);
+                query = new SolrQuery("{!field f=" + ALIAS + " v=$aliasValue}");
+                query.set("aliasValue", aliasPart);
             }
-            String searchStr = ALIAS + ":" + filter;
 
-            results = resolveSolrDocuments(searchStr);
+            results = resolveSolrDocuments(query);
 
             if (results.size() > 1) {
 
@@ -493,10 +494,11 @@ public class MCRAliasContentServlet extends MCRContentServlet {
      * @throws IOException
      */
     public SolrDocumentList resolveSolrDocuments(String searchStr) throws SolrServerException, IOException {
+        return resolveSolrDocuments(new SolrQuery(searchStr));
+    }
 
-        SolrQuery query = new SolrQuery();
+    private SolrDocumentList resolveSolrDocuments(SolrQuery query) throws SolrServerException, IOException {
 
-        query.setQuery(searchStr);
         query.setRows(1000);
         query.setStart(0);
 
