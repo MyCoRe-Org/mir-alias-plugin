@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - 'main'
+      - '2025.06.x'
   workflow_dispatch:
 
 jobs:
