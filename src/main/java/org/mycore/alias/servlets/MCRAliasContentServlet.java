@@ -497,7 +497,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
         SolrQuery query = new SolrQuery();
 
         query.setQuery(searchStr);
-        query.setRows(300);
+        query.setRows(1000);
         query.setStart(0);
 
         QueryResponse response;
