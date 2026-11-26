@@ -10,12 +10,12 @@
 
   <xsl:template match="mycoreobject">
     <xsl:apply-imports />
-    <xsl:apply-templates select="service/servflags/servflag[@type='alias']" mode="alias" />
+    <xsl:apply-templates select="service/servflags/servflag[@type='alias'][string-length(normalize-space()) &gt; 0][1]" mode="alias" />
   </xsl:template>
   
   <xsl:template match="service/servflags/servflag[@type='alias']" mode="alias">
     <field name="alias">
-      <xsl:value-of select="text()" />
+      <xsl:value-of select="normalize-space()" />
     </field>
   </xsl:template>
 </xsl:stylesheet>
