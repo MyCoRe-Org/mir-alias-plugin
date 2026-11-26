@@ -72,7 +72,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
      */
     private SolrClient solrClient = MCRSolrCoreManager.getMainSolrClient();
 
-    private MCRXMLMetadataManager metadataManager = MCRXMLMetadataManager.instance();
+    private MCRXMLMetadataManager metadataManager = MCRXMLMetadataManager.getInstance();
     private String aliasFilePattern;
 
 
