@@ -109,7 +109,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
 
         boolean isContentResolved = false;
 
-        while (!decreasedPath.isEmpty() && !isContentResolved) {
+        while (!decreasedPath.isEmpty() && !isContentResolved && !response.isCommitted()) {
 
             /*
              * Try to resolve decreased path as an alias
@@ -142,7 +142,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
             }
         }
 
-        if (contentFromAliasPath == null) {
+        if (contentFromAliasPath == null && !response.isCommitted()) {
             // Error redirect
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Requested Alias cannot be resolved on path: " + path);
         }
