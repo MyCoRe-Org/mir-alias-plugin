@@ -328,7 +328,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
                 String escapedObjectId = MCRSolrUtils.escapeSearchValue(objectId);
                 String searchStr = PARENT_RELATED_ITEM_FIELDS.stream()
                     .map(field -> field + ":" + escapedObjectId)
-                    .collect(Collectors.joining(" OR "));
+                    .collect(Collectors.joining(" OR ", "(", ") AND " + ALIAS + ":*"));
 
                 try {
                     SolrDocumentList relatedDocuments = resolveSolrDocuments(searchStr);
