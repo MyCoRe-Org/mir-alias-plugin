@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
+import org.apache.solr.client.solrj.request.QueryRequest;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
@@ -34,6 +35,8 @@ import org.mycore.datamodel.niofs.MCRPath;
 import org.mycore.frontend.servlets.MCRContentServlet;
 import org.mycore.solr.MCRSolrCoreManager;
 import org.mycore.solr.MCRSolrUtils;
+import org.mycore.solr.auth.MCRSolrAuthenticationLevel;
+import org.mycore.solr.auth.MCRSolrAuthenticationManager;
 import org.xml.sax.SAXException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -207,7 +210,7 @@ public class MCRAliasContentServlet extends MCRContentServlet {
         SolrQuery query = new SolrQuery(OBJECT_ID + ":(" + idQuery + ") AND " + ALIAS + ":*");
         query.setFields(OBJECT_ID);
         query.setRows(ids.size());
-        return solrClient.query(query).getResults().stream()
+        return query(query).getResults().stream()
             .map(doc -> (String) doc.getFieldValue(OBJECT_ID))
             .collect(Collectors.toSet());
     }
@@ -511,8 +514,15 @@ public class MCRAliasContentServlet extends MCRContentServlet {
         query.setStart(0);
 
         QueryResponse response;
-        response = solrClient.query(query);
+        response = query(query);
 
         return response.getResults();
+    }
+
+    private QueryResponse query(SolrQuery query) throws SolrServerException, IOException {
+        QueryRequest queryRequest = new QueryRequest(query);
+        MCRSolrAuthenticationManager.obtainInstance().applyAuthentication(queryRequest,
+            MCRSolrAuthenticationLevel.SEARCH);
+        return queryRequest.process(solrClient);
     }
 }
